@@ -82,8 +82,50 @@ public class ChessBoard {
 	return getWhite() | getBlack();
     }
 
+        // piece number for presence of either color, -1 for blank
+    public int typeAtPosition(int i) {
+	for (int j=0; j<6; j++)
+	    if (((1L << i) & (bbBlack[j] | bbWhite[j])) != 0) return j;
+	return -1;
+    }
+
+    // 0 for empty, 1 for white, -1 for black
+    public int colorAtPosition(int i) {
+	if (((1L << i) & getWhite()) != 0) return 1;
+	if (((1L << i) & getBlack()) != 0) return -1;
+	return 0;
+    }
+    
+    public boolean makeMove(ChessMove move) {
+	boolean capture = typeAtPosition(move.end) != -1;
+	int type = typeAtPosition(move.start);
+	switch (colorAtPosition(move.start)) {
+	    case 1:
+		bbWhite[type] |= (1L << move.end);
+		bbWhite[type] &= -1 *((1L << move.start)+1L);
+		break;
+	    case -1:
+		bbBlack[type] |= -1 * (1L << move.end);
+		bbBlack[type] &= -1 *((1L << move.start)+1L);
+		break;
+	    case 0: return false;
+	    }
+	return capture;
+    }
+    
     public static void main(String[] a) {
 	ChessBoard b = new ChessBoard();
-	System.out.println(b);
+	b.makeMove(new ChessMove("d2", "d3"));
+	pr(b);
+		   
+    }
+
+
+
+    static void pr(Object s) {
+	System.out.println(s);
+    }
+    static void prl(Long l) {
+	pr(Long.toBinaryString(l));
     }
 }
