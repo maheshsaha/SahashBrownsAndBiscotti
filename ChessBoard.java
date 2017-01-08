@@ -120,8 +120,6 @@ public class ChessBoard {
 		   
     }
 
-
-
     static void pr(Object s) {
 	System.out.println(s);
     }
