@@ -10,10 +10,11 @@ public class Chess {
 
     public static long[][] masks = new long[][] {rowMasks, forwardMasks, columnMasks, backwardMasks};
     
-    //piece masks
+    /* Uses function instead, because depends on occupancy
     public static long[] bishopMasks = new long[64];
     public static long[] rookMasks = new long[64];
     public static long[] queenMasks = new long[64];
+    */
     public static long[] knightMasks = new long[64];
     public static long[] kingMasks = new long[64];
     public static long[] pawnMasks = new long[64];
@@ -22,9 +23,12 @@ public class Chess {
 	for (int i=0; i<64; i++) {
 	    diagonalMask(i);
 	    parallelMask(i);
-	    bishopMasks[i]=forwardMasks[i] | backwardMasks[i];
+	    /*bishopMasks[i]=forwardMasks[i] | backwardMasks[i];
 	    rookMasks[i]=rowMasks[i] | columnMasks[i];
-	    queenMasks[i]=bishopMasks[i] | rookMasks[i];
+	    queenMasks[i]=bishopMasks[i] | rookMasks[i];*/
+
+	    knightMask(i);
+	    kingMask(i);
 	}
     }
 	
@@ -57,6 +61,34 @@ public class Chess {
     }
 
 
+    private static void knightMask(int position) {
+	long knightMask = 0L;
+	int[][] knightMoves = {{2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}, {1, 2}};
+	outer: for (int i=0; i<8; i++) {
+	    for (int j=0; j<2; j++) {
+		knightMoves[i][j]+= (j==0)? position%8: position/8;
+		System.out.println(knightMoves[i][j]);
+		if (knightMoves[i][j]<0 || knightMoves[i][j]>=8) continue outer;
+	    }
+	    knightMask += (1L<<(knightMoves[i][0]+8*knightMoves[i][1]));
+	}
+	knightMasks[position] = knightMask;
+    }
+
+        private static void kingMask(int position) {
+	long kingMask = 0L;
+	int[][] kingMoves = {{1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {-1, 1}, {0, 1}};
+	outer: for (int i=0; i<8; i++) {
+	    for (int j=0; j<2; j++) {
+		kingMoves[i][j]+= (j==0)? position%8: position/8;
+		if (kingMoves[i][j]<0 || kingMoves[i][j]>=8) continue outer;
+	    }
+	    kingMask += (1L<<(kingMoves[i][0]+8*kingMoves[i][1]));
+	}
+	kingMasks[position] = kingMask;
+    }
+	    
+    
     //visual repr of longs for debugging
     public static String longToString(long l) {
 	String out = "";
@@ -69,7 +101,7 @@ public class Chess {
 	return out;
     }
 
-    public static long forwardAttacks(long occ, int direction, int i) {
+    public static long directionMask(long occ, int direction, int i) {
 	long mask = masks[direction%4][i];
 	long moves = occ & mask;
 	long reverse = Long.reverse(moves);
@@ -78,10 +110,19 @@ public class Chess {
 	moves ^= Long.reverse(reverse);
 	return moves & mask;
     }
+
+    public static long bishopMask(long occ, int i) {
+	return directionMask(occ, 0, i) | directionMask(occ, 2, i);
+    }
+    public static long rookMask(long occ, int i) {
+	return directionMask(occ, 1, i) | directionMask(occ, 3, i);
+    }
+    public static long queenMask(long occ, int i) {
+	return bishopMask(occ, i) | rookMask(occ, i);
+    }
     
     public static void main(String[] args) {
-	long occ = 0b00000000_01000001_00000010_00000000_00001000_00010010_00100000_01000000L;
-	prl(forwardAttacks(occ, 3, 27));
+	prl(knightMasks[0]);
     }
 
     static void pr(Object o) {
