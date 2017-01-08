@@ -1,20 +1,47 @@
 public class ChessMove {
     public final int start;
     public final int end;
-
+    public boolean capture;
+    
     public ChessMove(int start, int end) {
 	this.start = start;
 	this.end = end;
+	capture = false;
     }
     public ChessMove(String start, String end) {
 	this.start = toIndex(start);
 	this.end = toIndex(end);
+	capture = false;
     }
+    public ChessMove(int start, int end, boolean capture) {
+	this(start, end);
+	this.capture = capture;
+    }
+    public ChessMove(String start, String end, boolean capture) {
+	this(start, end);
+	this.capture = capture;
+    }
+
+    /*
+    public ChessMove opposite() {
+	return new ChessMove(start, end, !capture);
+    }
+    public boolean equals(ChessMove other) {
+	return start==other.start & end==other.end & capture==other.capture;
+    }
+    */
+    public boolean equals(Object other) {
+	if (other==null || !(other instanceof ChessMove)) return false;
+	ChessMove otherMove = (ChessMove) other;
+	if (start==otherMove.start & end==otherMove.end) return true;
+	return false;
+    }
+  
+    
     public static int toIndex(String s) {
 	try {
 	    int column = 104 - s.charAt(0);
 	    int row = s.charAt(1) - 49;
-	    System.out.println("\t" + column + ", " + row);
 	    if (row < 0 || row >= 8 || column < 0 || column >=8)
 		throw new IndexOutOfBoundsException();
 	    return 8*row + column;

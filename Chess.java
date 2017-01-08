@@ -1,5 +1,8 @@
 public class Chess {
     //never meant to be inititated, no instance methods.
+
+    
+    
     
     //diagonal masks
     public static long[] rowMasks = new long[64];
@@ -30,6 +33,7 @@ public class Chess {
 
 	    knightMask(i);
 	    kingMask(i);
+	    pawnMask(i);
 	}
     }
 	
@@ -68,7 +72,6 @@ public class Chess {
 	outer: for (int i=0; i<8; i++) {
 	    for (int j=0; j<2; j++) {
 		knightMoves[i][j]+= (j==0)? position%8: position/8;
-		System.out.println(knightMoves[i][j]);
 		if (knightMoves[i][j]<0 || knightMoves[i][j]>=8) continue outer;
 	    }
 	    knightMask += (1L<<(knightMoves[i][0]+8*knightMoves[i][1]));
@@ -89,7 +92,7 @@ public class Chess {
 	kingMasks[position] = kingMask;
     }
 
-    private static pawnMask(int position) {
+    private static void pawnMask(int position) {
 	long pawnWCapMask = 0L;
 	long pawnBCapMask = 0L;
 	int[][] pawnWCapMoves = {{1, 1}, {-1, 1}};
