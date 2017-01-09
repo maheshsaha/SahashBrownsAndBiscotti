@@ -61,7 +61,7 @@ public class ChessBoard {
 	    for (int j=0; j<bbBlack.length; j++)
 		if (((1L << i) & bbBlack[j]) != 0) s = "b" + names[j];
 
-	    out += "\033[" + ((((1L<<i) & mask) != 0)? 45:((i/8+i%8)%2==0? 47: 40)) + ";" + ((((1L << i) & getWhite()) != 0)? 34: 31) + "m" + s + "\033[0m";
+	    out += "\033[" + ((((1L<<i) & mask) != 0)? 45:((i/8+i%8)%2==0? 47: 40)) + ";" + ((((1L << i) & getWhite()) != 0)? 35: 32) + "m" + s + "\033[0m";
 	    if (i%8==0) out +=(i/8+1) + "\n" + (i>0? (i/8):"");
 	    
 	}
