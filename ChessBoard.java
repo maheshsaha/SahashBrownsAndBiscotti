@@ -1,5 +1,6 @@
 import java.util.List;
 import java.util.LinkedList;
+import java.util.stream.Collectors;
 
 public class ChessBoard {
     // Default pieces for Chess with unique values so names can be referenced 
@@ -20,11 +21,15 @@ public class ChessBoard {
     // Two bitboard arrays for each color, storing piece location
     public final long[] bbWhite;
     public final long[] bbBlack;
+    private long bbPieces(int color, int type) {
+	return (color==WHITE)? bbWhite[type]: bbBlack[type];
+    }
 
     // index of enpassantable square if exists, -1 otherwise
     public int passant;
 
     private void resetPassant() {passant = -1;}
+
     /**
      *Default constructor 
      *Initializes the default board layout
@@ -60,8 +65,7 @@ public class ChessBoard {
 		if (((1L << i) & bbWhite[j]) != 0) s = "w" + names[j];
 	    for (int j=0; j<bbBlack.length; j++)
 		if (((1L << i) & bbBlack[j]) != 0) s = "b" + names[j];
-
-	    out += "\033[" + ((((1L<<i) & mask) != 0)? 45:((i/8+i%8)%2==0? 47: 40)) + ";" + ((((1L << i) & getWhite()) != 0)? 35: 32) + "m" + s + "\033[0m";
+	    out += "\033[" + ((((1L<<i) & mask) != 0)? 43:((i/8+i%8)%2==0? 47: 40)) + ";" + ((((1L << i) & getWhite()) != 0)? 34: 31) + "m" + s + "\033[0m";
 	    if (i%8==0) out +=(i/8+1) + "\n" + (i>0? (i/8):"");
 	    
 	}
@@ -103,6 +107,10 @@ public class ChessBoard {
 	return out;
     }
 
+    public long getByColor(int color) {
+	return (color==WHITE)? getWhite(): getBlack();
+    }
+    
     /**
      *This method is used to get a bitboard containg all of the pieces 
      *@return long A bitboard containing all present pieces
@@ -111,6 +119,37 @@ public class ChessBoard {
     public long getAll() {
 	return getWhite() | getBlack();
     }
+
+    public long attacking(int pos, int color) {
+	long pawns, knights, kings, bishopQueens, rookQueens;
+	pawns = bbPieces(color, PAWN);
+	knights = bbPieces(color, KNIGHT);
+	kings = bbPieces(color, KING);
+	bishopQueens = rookQueens = bbPieces(color, QUEEN);
+	bishopQueens |= bbPieces(color, BISHOP);
+	rookQueens |= bbPieces(color, ROOK);
+	return(pawns & Chess.pawnMasks[pos][2+color])
+	    | (knights & Chess.knightMasks[pos])
+	    | (kings & Chess.kingMasks[pos])
+	    | (bishopQueens & Chess.bishopMask(getAll(), pos))
+	    | (rookQueens & Chess.rookMask(getAll(), pos));
+    }
+	
+    public long inCheckFilter(int color) {
+	int pos = 0;
+	long king = bbPieces(color, KING);
+	while ((king>>=1)>0) pos++;
+	long attacking = attacking(pos, -color);
+	if (attacking==0L) return -1L;
+
+	long filter = (attacking & bbPieces(-color, KNIGHT))|(attacking & bbPieces(-color, PAWN));
+	for (Integer i: toIndices(attacking & (bbPieces(-color, QUEEN)|bbPieces(-color, ROOK)|bbPieces(-color, BISHOP)))) {
+	    filter |= Chess.rayMask(pos, i);
+	}
+	return filter;
+    }
+	
+	
     
         // piece number for presence of either color, -1 for blank
     public int typeAtPosition(int i) {
@@ -127,8 +166,6 @@ public class ChessBoard {
     }
     
     public void makeMove(ChessMove move) {
-	
-	
 	int startType = typeAtPosition(move.start);
 	int endType = typeAtPosition(move.end);
 	int color = colorAtPosition(move.start);
@@ -169,29 +206,48 @@ public class ChessBoard {
     }
 
     //for debugging only
-    public void place(int color, int type, String pos) {
+    public void place(int color, int type, int pos) {
+	int t = typeAtPosition(pos);
 	if (color==WHITE) {
-	    bbWhite[type] |= (1L<<ChessMove.toIndex(pos));
+	    if (t!=-1) bbBlack[t] &= -1 *((1L << pos)+1L);
 	} else {
-	    bbBlack[type] |= (1L<<ChessMove.toIndex(pos));
+	    if (t!=-1) bbWhite[t] &= -1 *((1L << pos)+1L);
+	}
+	if (type==-1) return;
+ 	if (color==WHITE) {
+	    bbWhite[type] |= (1L<<pos);
+	} else {
+	    bbBlack[type] |= (1L<<pos);
 	}
     }
-    
-    public List<ChessMove> toMoves(int start, long ends, boolean capture) {
+    public void place(int color, int type, String pos) {
+	place(color, type, ChessMove.toIndex(pos));
+    }
+    //i tested this a lot, pretty sure its the fastest way....
+    public static List<Integer> toIndices(long l) {
+	List<Integer> ints = new LinkedList<>();
+	for(int i=0; i<64; i++) {
+	    if ((1 & l)==1) ints.add(i);
+	    l>>=1;
+	}
+	return ints;
+    }
+	
+    public static List<ChessMove> toMoves(int start, long ends, boolean capture) {
 	List<ChessMove> moves = new LinkedList<>();
-	for (int i=0; i<64; i++)
-	    if (((1L<<i) & ends) != 0) moves.add(new ChessMove(start, i, capture));
+	for (Integer end: toIndices(ends))
+	    moves.add(new ChessMove(start, end, capture));
 	return moves;
     }
 
-    public long moveMask(List<ChessMove> moves) {
+    public static long moveMask(List<ChessMove> moves) {
 	long moveMask = 0L;
 	for (ChessMove move: moves) {
 	    if (!move.capture) moveMask += (1L<<move.end);
 	}
 	return moveMask;
     }
-    public long captureMask(List<ChessMove> moves) {
+    public static long captureMask(List<ChessMove> moves) {
 	long captureMask = 0L;
 	for (ChessMove move: moves) {
 	    if (move.capture) captureMask += (1L<<move.end);
@@ -204,7 +260,7 @@ public class ChessBoard {
 	List<ChessMove> moves = new LinkedList<>();
 	int color = colorAtPosition(pos);
 	if (color == 0) return moves;
-	long opp = color==WHITE? getBlack(): getWhite();
+	long opp = getByColor(-color);
 	long all = getAll();
 	long moveMask = 0L;
 	long captureMask = 0L;
@@ -247,66 +303,27 @@ public class ChessBoard {
     public List<ChessMove> pieceMoves(String pos) {
 	return pieceMoves(ChessMove.toIndex(pos));
     }
-    
 
-    public boolean validMove(ChessMove move) {
-	List<ChessMove> valid = pieceMoves(move.start);
-	return valid.contains(move);// || valid.contains(move.opposite());
+    //returns
+    public static List<ChessMove> applyMask(List<ChessMove> moves, long startMask, long endMask) {
+	List<Integer> starts = toIndices(startMask);
+	List<Integer> ends = toIndices(endMask);
+	return  moves.stream()
+	    .filter(cm -> (starts.contains(cm.start) & ends.contains(cm.end)))
+	    .collect(Collectors.toList());
     }
-
-    public void playerMoveCycle() {
-	while(true) {
-	    System.out.println(this);
-	    String start = "";
-	    while(true) {
-		System.out.print("enter move start: ");
-		start = System.console().readLine();
-		List<ChessMove> pieceMoves = new LinkedList<>();
-		try {
-		    pieceMoves = pieceMoves(ChessMove.toIndex(start));
-		    if (pieceMoves.size()==0) throw new IllegalStateException();
-		    long mask = moveMask(pieceMoves) | captureMask(pieceMoves);
-		    System.out.println(this.toString(mask));
-		    break;
-		} catch (IllegalArgumentException e) {
-		    System.out.println("invalid move syntax");
-		} catch (IllegalStateException e) {
-		    if (((1L<<ChessMove.toIndex(start))&getAll())==0L) {
-			System.out.println("No piece at specified position");
-		    } else {
-			System.out.println("No moves avilable for specified piece");
-		    }
-		}
-	    }
-	    System.out.print("enter move end: ");
-	    String end = System.console().readLine();
-	    try {
-		ChessMove move = new ChessMove(start, end);
-		if (validMove(move)) {
-		    if (((1L<<move.end) & getAll())!=0) System.out.println("Capture made!");
-		    makeMove(move);
-		} else {
-		    System.out.println("invalid move for given piece\n");
-		}
-	    } catch (Exception e) {
-		System.out.println(e.getMessage());
-	    }
-	}
-    }
-		    
-    
+	
     public static void main(String[] a) {
 	ChessBoard b = new ChessBoard();
 	b.setup();
-	b.playerMoveCycle();
-	/*b.place(WHITE, QUEEN, "e4");
-	b.place(BLACK, PAWN, "e8");
-	pr(b);
-	pr(b.toString("e4"));
-	prll(Chess.queenMask(b.getAll(), ChessMove.toIndex("e4")));*/
+	b.makeMove("d2", "d4");
+	b.makeMove("e7", "e5");
+	pr(b.toString(captureMask(b.pieceMoves("d4"))));
 
     }
 
+
+    //debuggin prints
     static void pr(Object s) {
 	System.out.println(s);
     }
