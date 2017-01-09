@@ -1,5 +1,6 @@
 import java.util.List;
 import java.util.LinkedList;
+import java.util.stream.Collectors;
 
 public class ChessBoard {
     // Default pieces for Chess with unique values so names can be referenced 
@@ -23,7 +24,7 @@ public class ChessBoard {
     private long bbPieces(int color, int type) {
 	return (color==WHITE)? bbWhite[type]: bbBlack[type];
     }
-    
+
     // index of enpassantable square if exists, -1 otherwise
     public int passant;
 
@@ -107,6 +108,10 @@ public class ChessBoard {
 	return out;
     }
 
+    public long getByColor(int color) {
+	return (color==WHITE)? getWhite(): getBlack();
+    }
+    
     /**
      *This method is used to get a bitboard containg all of the pieces 
      *@return long A bitboard containing all present pieces
@@ -236,14 +241,14 @@ public class ChessBoard {
 	return moves;
     }
 
-    public long moveMask(List<ChessMove> moves) {
+    public static long moveMask(List<ChessMove> moves) {
 	long moveMask = 0L;
 	for (ChessMove move: moves) {
 	    if (!move.capture) moveMask += (1L<<move.end);
 	}
 	return moveMask;
     }
-    public long captureMask(List<ChessMove> moves) {
+    public static long captureMask(List<ChessMove> moves) {
 	long captureMask = 0L;
 	for (ChessMove move: moves) {
 	    if (move.capture) captureMask += (1L<<move.end);
@@ -256,7 +261,7 @@ public class ChessBoard {
 	List<ChessMove> moves = new LinkedList<>();
 	int color = colorAtPosition(pos);
 	if (color == 0) return moves;
-	long opp = color==WHITE? getBlack(): getWhite();
+	long opp = getByColor(-color);
 	long all = getAll();
 	long moveMask = 0L;
 	long captureMask = 0L;
@@ -299,71 +304,27 @@ public class ChessBoard {
     public List<ChessMove> pieceMoves(String pos) {
 	return pieceMoves(ChessMove.toIndex(pos));
     }
-    
 
-    public boolean validMove(ChessMove move) {
-	List<ChessMove> valid = pieceMoves(move.start);
-	return valid.contains(move);// || valid.contains(move.opposite());
+    //returns
+    public static List<ChessMove> applyMask(List<ChessMove> moves, long startMask, long endMask) {
+	List<Integer> starts = toIndices(startMask);
+	List<Integer> ends = toIndices(endMask);
+	return  moves.stream()
+	    .filter(cm -> (starts.contains(cm.start) & ends.contains(cm.end)))
+	    .collect(Collectors.toList());
     }
-
-    public void playerMoveCycle() {
-	while(true) {
-	    System.out.println(this);
-	    String start = "";
-	    while(true) {
-		System.out.print("enter move start: ");
-		start = System.console().readLine();
-		List<ChessMove> pieceMoves = new LinkedList<>();
-		try {
-		    pieceMoves = pieceMoves(ChessMove.toIndex(start));
-		    if (pieceMoves.size()==0) throw new IllegalStateException();
-		    long mask = moveMask(pieceMoves) | captureMask(pieceMoves);
-		    System.out.println(this.toString(mask));
-		    break;
-		} catch (IllegalArgumentException e) {
-		    System.out.println("invalid move syntax");
-		} catch (IllegalStateException e) {
-		    if (((1L<<ChessMove.toIndex(start))&getAll())==0L) {
-			System.out.println("No piece at specified position");
-		    } else {
-			System.out.println("No moves avilable for specified piece");
-		    }
-		}
-	    }
-	    System.out.print("enter move end: ");
-	    String end = System.console().readLine();
-	    try {
-		ChessMove move = new ChessMove(start, end);
-		if (validMove(move)) {
-		    if (((1L<<move.end) & getAll())!=0) System.out.println("Capture made!");
-		    makeMove(move);
-		} else {
-		    System.out.println("invalid move for given piece\n");
-		}
-	    } catch (Exception e) {
-		System.out.println(e.getMessage());
-	    }
-	}
-    }
-		    
-    
+	
     public static void main(String[] a) {
 	ChessBoard b = new ChessBoard();
 	b.setup();
-	b.place(WHITE, BISHOP, "e5");
-	b.place(WHITE, QUEEN, "a5");
-	b.place(WHITE, ROOK, "h3");
-	b.makeMove("d8", "c3");
-	pr(b.toString(b.inCheckFilter(BLACK)));
-	//b.playerMoveCycle();
-	/*b.place(WHITE, QUEEN, "e4");
-	b.place(BLACK, PAWN, "e8");
-	pr(b);
-	pr(b.toString("e4"));
-	prll(Chess.queenMask(b.getAll(), ChessMove.toIndex("e4")));*/
+	b.makeMove("d2", "d4");
+	b.makeMove("e7", "e5");
+	pr(b.toString(captureMask(b.pieceMoves("d4"))));
 
     }
 
+
+    //debuggin prints
     static void pr(Object s) {
 	System.out.println(s);
     }
