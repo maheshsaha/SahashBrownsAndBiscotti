@@ -1,6 +1,9 @@
 public class Chess {
     //never meant to be inititated, no instance methods.
 
+    
+    
+    
     //diagonal masks
     public static long[] rowMasks = new long[64];
     public static long[] columnMasks = new long[64];
@@ -17,7 +20,8 @@ public class Chess {
     */
     public static long[] knightMasks = new long[64];
     public static long[] kingMasks = new long[64];
-    public static long[] pawnMasks = new long[64];
+    //pawns have diff masks for white moves, white captures, black moves, black captures
+    public static long[][] pawnMasks = new long[64][4];
     
     static {
 	for (int i=0; i<64; i++) {
@@ -29,6 +33,7 @@ public class Chess {
 
 	    knightMask(i);
 	    kingMask(i);
+	    pawnMask(i);
 	}
     }
 	
@@ -67,7 +72,6 @@ public class Chess {
 	outer: for (int i=0; i<8; i++) {
 	    for (int j=0; j<2; j++) {
 		knightMoves[i][j]+= (j==0)? position%8: position/8;
-		System.out.println(knightMoves[i][j]);
 		if (knightMoves[i][j]<0 || knightMoves[i][j]>=8) continue outer;
 	    }
 	    knightMask += (1L<<(knightMoves[i][0]+8*knightMoves[i][1]));
@@ -75,7 +79,7 @@ public class Chess {
 	knightMasks[position] = knightMask;
     }
 
-        private static void kingMask(int position) {
+    private static void kingMask(int position) {
 	long kingMask = 0L;
 	int[][] kingMoves = {{1, 1}, {1, 0}, {1, -1}, {0, -1}, {-1, -1}, {-1, 0}, {-1, 1}, {0, 1}};
 	outer: for (int i=0; i<8; i++) {
@@ -86,6 +90,31 @@ public class Chess {
 	    kingMask += (1L<<(kingMoves[i][0]+8*kingMoves[i][1]));
 	}
 	kingMasks[position] = kingMask;
+    }
+
+    private static void pawnMask(int position) {
+	long pawnWCapMask = 0L;
+	long pawnBCapMask = 0L;
+	int[][] pawnWCapMoves = {{1, 1}, {-1, 1}};
+	int[][] pawnBCapMoves = {{1, -1}, {-1, -1}};
+	if (position/8<7) pawnMasks[position][0] = (1L<<(position+8));
+	if (position/8>0) pawnMasks[position][2] = (1L<<(position-8));
+	outer: for (int i=0; i<2; i++) {
+	    for (int j=0; j<2; j++) {
+		pawnWCapMoves[i][j]+= (j==0)? position%8: position/8;
+		if (pawnWCapMoves[i][j]<0 || pawnWCapMoves[i][j]>=8) continue outer;
+	    }
+	    pawnWCapMask += (1L<<(pawnWCapMoves[i][0]+8*pawnWCapMoves[i][1]));
+	}
+	pawnMasks[position][1] = pawnWCapMask;
+	outer: for (int i=0; i<2; i++) {
+	    for (int j=0; j<2; j++) {
+		pawnBCapMoves[i][j]+= (j==0)? position%8: position/8;
+		if (pawnBCapMoves[i][j]<0 || pawnBCapMoves[i][j]>=8) continue outer;
+	    }
+	    pawnBCapMask += (1L<<(pawnBCapMoves[i][0]+8*pawnBCapMoves[i][1]));
+	}
+	pawnMasks[position][3] = pawnBCapMask;
     }
 	    
     
@@ -112,10 +141,10 @@ public class Chess {
     }
 
     public static long bishopMask(long occ, int i) {
-	return directionMask(occ, 0, i) | directionMask(occ, 2, i);
+	return directionMask(occ, 1, i) | directionMask(occ, 3, i);
     }
     public static long rookMask(long occ, int i) {
-	return directionMask(occ, 1, i) | directionMask(occ, 3, i);
+	return directionMask(occ, 0, i) | directionMask(occ, 2, i);
     }
     public static long queenMask(long occ, int i) {
 	return bishopMask(occ, i) | rookMask(occ, i);
