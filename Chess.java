@@ -93,12 +93,15 @@ public class Chess {
     }
 
     private static void pawnMask(int position) {
+	if (position/8<7) pawnMasks[position][0] = (1L<<(position+8));
+	if (position/8==1) pawnMasks[position][0] += (1L<<(position+16));
+	if (position/8>0) pawnMasks[position][2] = (1L<<(position-8));
+	if (position/8==6) pawnMasks[position][2] += (1L<<(position-16));
+
 	long pawnWCapMask = 0L;
 	long pawnBCapMask = 0L;
 	int[][] pawnWCapMoves = {{1, 1}, {-1, 1}};
 	int[][] pawnBCapMoves = {{1, -1}, {-1, -1}};
-	if (position/8<7) pawnMasks[position][0] = (1L<<(position+8));
-	if (position/8>0) pawnMasks[position][2] = (1L<<(position-8));
 	outer: for (int i=0; i<2; i++) {
 	    for (int j=0; j<2; j++) {
 		pawnWCapMoves[i][j]+= (j==0)? position%8: position/8;
