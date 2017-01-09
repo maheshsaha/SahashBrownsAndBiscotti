@@ -18,6 +18,8 @@ public class ChessBoard {
     // String Array containing abbreviations for the chess pieces
     public static final String[] names = new String[] {"P", "B", "H", "R", "Q", "K"};
 
+    // {"♟", "♝", "♞", "♜", "♛", "♚"};
+
     // Two bitboard arrays for each color, storing piece location
     public final long[] bbWhite;
     public final long[] bbBlack;
