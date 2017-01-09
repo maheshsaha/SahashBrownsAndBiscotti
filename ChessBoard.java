@@ -121,6 +121,12 @@ public class ChessBoard {
     public long getAll() {
 	return getWhite() | getBlack();
     }
+    /**
+     *Method that will execute the attack
+     *@param int Position of desired piece
+     *@param int Color of the desired piece
+     *@return long mask of all squares containing pieces of the given color that ar attacking the specific square at position pos
+     */
 
     public long attacking(int pos, int color) {
 	long pawns, knights, kings, bishopQueens, rookQueens;
@@ -136,7 +142,12 @@ public class ChessBoard {
 	    | (bishopQueens & Chess.bishopMask(getAll(), pos))
 	    | (rookQueens & Chess.rookMask(getAll(), pos));
     }
-	
+    /**
+     *Method that checks if the other side is inCheck after every move is made. Runs the attacking method on the king of the color and the opposite color's pieces
+     *@param int Color of king being checked
+     *@return long A mask that reveals the positions the defending king's pieces can move to block the check
+     */
+
     public long inCheckFilter(int color) {
 	int pos = 0;
 	long king = bbPieces(color, KING);
