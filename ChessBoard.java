@@ -52,7 +52,7 @@ public class ChessBoard {
     }
 
     public String toString(long mask) {
-	String out = "";
+	String out = "  a b c d e f g h\n8";
 	for (int i=63; i>=0; i--) {
 	    String s = "  ";
 	    for (int j=0; j<bbWhite.length; j++)
@@ -61,10 +61,10 @@ public class ChessBoard {
 		if (((1L << i) & bbBlack[j]) != 0) s = "b" + names[j];
 
 	    out += "\033[" + ((((1L<<i) & mask) != 0)? 45:((i/8+i%8)%2==0? 40: 47)) + ";" + ((((1L << i) & getWhite()) != 0)? 34: 31) + "m" + s + "\033[0m";
-	    if (i%8==0) out +="\n";
+	    if (i%8==0) out +=(i/8+1) + "\n" + (i>0? (i/8):"");
 	    
 	}
-	return out;
+	return out + " a b c d e f g h";
     }
 
     /**
@@ -221,6 +221,11 @@ public class ChessBoard {
 	while(true) {
 	    System.out.print("enter move start: ");
 	    String start = System.console().readLine();
+	    try {
+		List<ChessMove> pieceMoves = pieceMoves(ChessMove.toIndex(start));
+		long mask = moveMask(pieceMoves) | captureMask(pieceMoves);
+		System.out.println(this.toString(mask));
+	    } catch (Exception e) {System.out.println("invalid move syntax");}
 	    System.out.print("enter move end: ");
 	    String end = System.console().readLine();
 	    try {
@@ -228,7 +233,7 @@ public class ChessBoard {
 		if (validMove(move)) {
 		    if (((1L<<move.end) & getAll())!=0) System.out.println("Capture made!");
 		    makeMove(move);
-		    System.out.println(this.toString(0L));
+		    System.out.println(this);
 		} else {
 		    System.out.println("invalid move for given piece, try:");
 		    for (ChessMove valid: pieceMoves(start)) System.out.print(valid + " ");
@@ -244,9 +249,7 @@ public class ChessBoard {
     public static void main(String[] a) {
 	ChessBoard b = new ChessBoard();
 	//b.setup();
-	/*b.place(QUEEN, WHITE, "f3");
-	pr(b.toString(64L));
-	*/
+	b.place(BISHOP, WHITE, "f3");
 	b.playerMoveCycle();
 	/*b.makeMove("g7", "g3");
 	pr(b);

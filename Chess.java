@@ -141,10 +141,10 @@ public class Chess {
     }
 
     public static long bishopMask(long occ, int i) {
-	return directionMask(occ, 0, i) | directionMask(occ, 2, i);
+	return directionMask(occ, 1, i) | directionMask(occ, 3, i);
     }
     public static long rookMask(long occ, int i) {
-	return directionMask(occ, 1, i) | directionMask(occ, 3, i);
+	return directionMask(occ, 0, i) | directionMask(occ, 2, i);
     }
     public static long queenMask(long occ, int i) {
 	return bishopMask(occ, i) | rookMask(occ, i);
