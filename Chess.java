@@ -123,16 +123,10 @@ public class Chess {
     
     //visual repr of longs for debugging
     public static String longToString(long l) {
-	String out = "";
-	for (int i=63; i>=0; i--) {
-	    String s = "0";
-	    if (((1L << i) & l) != 0) s="1";
-	    out+=s;
-	    if (i%8==0) out +="\n";
-	}
-	return out;
+	ChessBoard b = new ChessBoard();
+	return b.toString(l);
     }
-
+    
     public static long directionMask(long occ, int direction, int i) {
 	long mask = masks[direction%4][i];
 	long moves = occ & mask;
@@ -157,11 +151,32 @@ public class Chess {
 	if (Math.abs(passant-i)==1) return (1L<<(passant+8*color));
 	return 0L;
     }
+
+
+    //i don't know if there is a more effecient way to do this, lmk if you think of one
+    public static long rayMask(int from, int to) {
+	int x = to%8-from%8;
+	int y = to/8-from/8;
+	if ((x==0) & (y==0)) return 0L;
+	int delta = Integer.signum(x)+8*Integer.signum(y);
+	//int length = (x==0)? y/Integer.signum(y): x/Integer.signum(x);
+	long mask = 0L;
+	if (delta>0) {
+	    for (int i=from+delta; i<=to; i+=delta) {
+		mask |= (1L<<i);
+	    }
+	} else {
+	    for (int i=from+delta; i>=to; i+=delta) {
+		mask |= (1L<<i);
+	    }
+	}
+	return mask;
+	//return ((1L<<from)*((1L<<delta*length)-1)/((1L<<delta)-1))<<delta;
+    }
 	
-	    
     
     public static void main(String[] args) {
-	prl(knightMasks[0]);
+	prll(rayMask(20, 21));
     }
 
     static void pr(Object o) {
@@ -169,5 +184,8 @@ public class Chess {
     }
     static void prl(long l) {
 	pr(longToString(l));
+    }
+    static void prll(long l) {
+	pr(Chess.longToString(l));
     }
 }	    

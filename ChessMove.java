@@ -46,7 +46,7 @@ public class ChessMove {
 		throw new IndexOutOfBoundsException();
 	    return 8*row + column;
 	} catch (IndexOutOfBoundsException iofbe) {
-	    throw new IllegalArgumentException("Invalid board position string");
+	    throw new IllegalArgumentException("No square with specified position");
 	}
     }
     public static String toPositionString(int n) {
@@ -58,7 +58,7 @@ public class ChessMove {
     }
 
     public String toString() {
-	return toPositionString(start) + " -> " + toPositionString(end);
+	return toPositionString(start) + " -> " + toPositionString(end) + (capture? " ; capture": "");
     }
     public static void main(String[] args) {
 	for (String s: args) System.out.println(toPositionString(toIndex(s)));
