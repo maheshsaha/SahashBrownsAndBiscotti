@@ -20,11 +20,15 @@ public class ChessBoard {
     // Two bitboard arrays for each color, storing piece location
     public final long[] bbWhite;
     public final long[] bbBlack;
-
+    private long bbPieces(int color, int type) {
+	return (color==WHITE)? bbWhite[type]: bbBlack[type];
+    }
+    
     // index of enpassantable square if exists, -1 otherwise
     public int passant;
 
     private void resetPassant() {passant = -1;}
+
     /**
      *Default constructor 
      *Initializes the default board layout
@@ -61,7 +65,7 @@ public class ChessBoard {
 	    for (int j=0; j<bbBlack.length; j++)
 		if (((1L << i) & bbBlack[j]) != 0) s = "b" + names[j];
 
-	    out += "\033[" + ((((1L<<i) & mask) != 0)? 45:((i/8+i%8)%2==0? 40: 47)) + ";" + ((((1L << i) & getWhite()) != 0)? 34: 31) + "m" + s + "\033[0m";
+	    out += "\033[" + ((((1L<<i) & mask) != 0)? 43:((i/8+i%8)%2==0? 40: 47)) + ";" + ((((1L << i) & getWhite()) != 0)? 34: 31) + "m" + s + "\033[0m";
 	    if (i%8==0) out +=(i/8+1) + "\n" + (i>0? (i/8):"");
 	    
 	}
@@ -111,6 +115,37 @@ public class ChessBoard {
     public long getAll() {
 	return getWhite() | getBlack();
     }
+
+    public long attacking(int pos, int color) {
+	long pawns, knights, kings, bishopQueens, rookQueens;
+	pawns = bbPieces(color, PAWN);
+	knights = bbPieces(color, KNIGHT);
+	kings = bbPieces(color, KING);
+	bishopQueens = rookQueens = bbPieces(color, QUEEN);
+	bishopQueens |= bbPieces(color, BISHOP);
+	rookQueens |= bbPieces(color, ROOK);
+	return(pawns & Chess.pawnMasks[pos][2+color])
+	    | (knights & Chess.knightMasks[pos])
+	    | (kings & Chess.kingMasks[pos])
+	    | (bishopQueens & Chess.bishopMask(getAll(), pos))
+	    | (rookQueens & Chess.rookMask(getAll(), pos));
+    }
+	
+    public long inCheckFilter(int color) {
+	int pos = 0;
+	long king = bbPieces(color, KING);
+	while ((king>>=1)>0) pos++;
+	long attacking = attacking(pos, -color);
+	if (attacking==0L) return -1L;
+
+	long filter = (attacking & bbPieces(-color, KNIGHT))|(attacking & bbPieces(-color, PAWN));
+	for (Integer i: toIndices(attacking & (bbPieces(-color, QUEEN)|bbPieces(-color, ROOK)|bbPieces(-color, BISHOP)))) {
+	    filter |= Chess.rayMask(pos, i);
+	}
+	return filter;
+    }
+	
+	
     
         // piece number for presence of either color, -1 for blank
     public int typeAtPosition(int i) {
@@ -127,8 +162,6 @@ public class ChessBoard {
     }
     
     public void makeMove(ChessMove move) {
-	
-	
 	int startType = typeAtPosition(move.start);
 	int endType = typeAtPosition(move.end);
 	int color = colorAtPosition(move.start);
@@ -169,18 +202,37 @@ public class ChessBoard {
     }
 
     //for debugging only
-    public void place(int color, int type, String pos) {
+    public void place(int color, int type, int pos) {
+	int t = typeAtPosition(pos);
 	if (color==WHITE) {
-	    bbWhite[type] |= (1L<<ChessMove.toIndex(pos));
+	    if (t!=-1) bbBlack[t] &= -1 *((1L << pos)+1L);
 	} else {
-	    bbBlack[type] |= (1L<<ChessMove.toIndex(pos));
+	    if (t!=-1) bbWhite[t] &= -1 *((1L << pos)+1L);
+	}
+	if (type==-1) return;
+ 	if (color==WHITE) {
+	    bbWhite[type] |= (1L<<pos);
+	} else {
+	    bbBlack[type] |= (1L<<pos);
 	}
     }
-    
-    public List<ChessMove> toMoves(int start, long ends, boolean capture) {
+    public void place(int color, int type, String pos) {
+	place(color, type, ChessMove.toIndex(pos));
+    }
+    //i tested this a lot, pretty sure its the fastest way....
+    public static List<Integer> toIndices(long l) {
+	List<Integer> ints = new LinkedList<>();
+	for(int i=0; i<64; i++) {
+	    if ((1 & l)==1) ints.add(i);
+	    l>>=1;
+	}
+	return ints;
+    }
+	
+    public static List<ChessMove> toMoves(int start, long ends, boolean capture) {
 	List<ChessMove> moves = new LinkedList<>();
-	for (int i=0; i<64; i++)
-	    if (((1L<<i) & ends) != 0) moves.add(new ChessMove(start, i, capture));
+	for (Integer end: toIndices(ends))
+	    moves.add(new ChessMove(start, end, capture));
 	return moves;
     }
 
@@ -298,7 +350,12 @@ public class ChessBoard {
     public static void main(String[] a) {
 	ChessBoard b = new ChessBoard();
 	b.setup();
-	b.playerMoveCycle();
+	b.place(WHITE, BISHOP, "e5");
+	b.place(WHITE, QUEEN, "a5");
+	b.place(WHITE, ROOK, "h3");
+	b.makeMove("d8", "c3");
+	pr(b.toString(b.inCheckFilter(BLACK)));
+	//b.playerMoveCycle();
 	/*b.place(WHITE, QUEEN, "e4");
 	b.place(BLACK, PAWN, "e8");
 	pr(b);
