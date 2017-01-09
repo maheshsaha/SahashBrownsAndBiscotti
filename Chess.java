@@ -123,14 +123,8 @@ public class Chess {
     
     //visual repr of longs for debugging
     public static String longToString(long l) {
-	String out = "";
-	for (int i=63; i>=0; i--) {
-	    String s = "0";
-	    if (((1L << i) & l) != 0) s="1";
-	    out+=s;
-	    if (i%8==0) out +="\n";
-	}
-	return out;
+	ChessBoard b = new ChessBoard();
+	return b.toString(l);
     }
     
     public static long directionMask(long occ, int direction, int i) {
