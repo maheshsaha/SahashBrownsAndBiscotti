@@ -21,6 +21,10 @@ public class ChessBoard {
     public final long[] bbWhite;
     public final long[] bbBlack;
 
+    // index of enpassantable square if exists, -1 otherwise
+    public int passant;
+
+    private void resetPassant() {passant = -1;}
     /**
      *Default constructor 
      *Initializes the default board layout
@@ -29,6 +33,7 @@ public class ChessBoard {
     public ChessBoard(){
 	bbWhite = new long[6];
 	bbBlack = new long[6];
+	resetPassant();
     }
 
     public void setup() {
@@ -47,10 +52,6 @@ public class ChessBoard {
      *@return String Visual representation of the present chessboard. The lowercase letter preceeding the uppercase letter indicates color. K = King, Q = Queen, R = Rook, B = Bishop, N = Knight, P = Pawn
      */    
     
-    public String toString() {
-	return toString(0L);
-    }
-
     public String toString(long mask) {
 	String out = "  a b c d e f g h\n8";
 	for (int i=63; i>=0; i--) {
@@ -66,7 +67,20 @@ public class ChessBoard {
 	}
 	return out + " a b c d e f g h";
     }
-
+    
+    public String toString() {
+	return toString(0L);
+    }
+    //mainly for debugging, ineffecient
+    public String toString(String pos) {
+	try {
+	    List<ChessMove> pieceMoves = pieceMoves(ChessMove.toIndex(pos));
+	    long mask = moveMask(pieceMoves) | captureMask(pieceMoves);
+	    return toString(mask);
+	} catch (Exception e) {return toString();}
+    }
+	    
+    
     /**
      *This method is used to get a bitboard that contains only white pieces 
      *@return long A bitboard containing present white pieces only
@@ -113,26 +127,49 @@ public class ChessBoard {
     }
     
     public void makeMove(ChessMove move) {
-	int type = typeAtPosition(move.start);
-	switch (colorAtPosition(move.start)) {
+	
+	
+	int startType = typeAtPosition(move.start);
+	int endType = typeAtPosition(move.end);
+	int color = colorAtPosition(move.start);
+	switch (color) {
 	case WHITE:
-	    bbWhite[type] |= (1L << move.end); //add white piece at end
-	    bbWhite[type] &= -1 *((1L << move.start)+1L);//remove white piece at start
-	    bbBlack[type] &= -1 *((1L << move.end)+1L);//remove black piece at end
+	    bbWhite[startType] |= (1L << move.end); //add white piece at end
+	    bbWhite[startType] &= -1*((1L << move.start)+1L);//remove white piece at start
+	    if (endType!=-1) bbBlack[endType] &= -1 *((1L << move.end)+1L);//remove black piece at end
 	    break;
 	case BLACK:
-	    bbBlack[type] |= (1L << move.end);//add black piece at end
-	    bbBlack[type] &= -1 *((1L << move.start)+1L);//remove black piece at start
-	    bbBlack[type] &= -1 *((1L << move.end)+1L);//remove white piece at end
+	    bbBlack[startType] |= (1L << move.end);//add black piece at end
+	    bbBlack[startType] &= -1*((1L << move.start)+1L);//remove black piece at start
+	    if (endType!=-1) bbWhite[endType] &= -1 *((1L << move.end)+1L);//remove white piece at end
 	    break;
+	}
+
+
+	//if a pawn just moved in front of a passantable square, kill the pawn there
+	if (startType==PAWN && move.end-8*color==passant) {
+	    switch (color) {
+	    case WHITE:
+		bbBlack[PAWN] &= -1*((1L << passant)+1L);
+		break;
+	    case BLACK:
+		bbWhite[PAWN] &= -1*((1L << passant)+1L);
+		break;
 	    }
+	}
+	
+	resetPassant();
+	//if you double push a pawn, set its endpoint to be the enpassant square
+	if (startType==PAWN && Math.abs(move.start/8-move.end/8)==2) {
+	    passant = move.end;
+	}
     }
     public void makeMove(String start, String end) {
 	makeMove(new ChessMove(start, end));
     }
 
     //for debugging only
-    public void place(int type, int color, String pos) {
+    public void place(int color, int type, String pos) {
 	if (color==WHITE) {
 	    bbWhite[type] |= (1L<<ChessMove.toIndex(pos));
 	} else {
@@ -175,6 +212,7 @@ public class ChessBoard {
 	case PAWN:
 	    moveMask = Chess.pawnMasks[pos][1-color] & ~all;
 	    captureMask = Chess.pawnMasks[pos][2-color] & opp;
+	    captureMask |= Chess.passantMask(color, passant, pos);
 	    break;
 	case KNIGHT:
 	    moveMask = Chess.knightMasks[pos] & ~all;
@@ -193,7 +231,7 @@ public class ChessBoard {
 	case QUEEN:
 	    long queenMask = Chess.queenMask(all, pos);
 	    moveMask = queenMask & ~all;
-	    captureMask = queenMask & ~all;
+	    captureMask = queenMask & opp;
 	    break;
 	case KING:
 	    moveMask = Chess.kingMasks[pos] & ~all;
@@ -217,15 +255,29 @@ public class ChessBoard {
     }
 
     public void playerMoveCycle() {
-	System.out.println(this);
 	while(true) {
-	    System.out.print("enter move start: ");
-	    String start = System.console().readLine();
-	    try {
-		List<ChessMove> pieceMoves = pieceMoves(ChessMove.toIndex(start));
-		long mask = moveMask(pieceMoves) | captureMask(pieceMoves);
-		System.out.println(this.toString(mask));
-	    } catch (Exception e) {System.out.println("invalid move syntax");}
+	    System.out.println(this);
+	    String start = "";
+	    while(true) {
+		System.out.print("enter move start: ");
+		start = System.console().readLine();
+		List<ChessMove> pieceMoves = new LinkedList<>();
+		try {
+		    pieceMoves = pieceMoves(ChessMove.toIndex(start));
+		    if (pieceMoves.size()==0) throw new IllegalStateException();
+		    long mask = moveMask(pieceMoves) | captureMask(pieceMoves);
+		    System.out.println(this.toString(mask));
+		    break;
+		} catch (IllegalArgumentException e) {
+		    System.out.println("invalid move syntax");
+		} catch (IllegalStateException e) {
+		    if (((1L<<ChessMove.toIndex(start))&getAll())==0L) {
+			System.out.println("No piece at specified position");
+		    } else {
+			System.out.println("No moves avilable for specified piece");
+		    }
+		}
+	    }
 	    System.out.print("enter move end: ");
 	    String end = System.console().readLine();
 	    try {
@@ -233,14 +285,11 @@ public class ChessBoard {
 		if (validMove(move)) {
 		    if (((1L<<move.end) & getAll())!=0) System.out.println("Capture made!");
 		    makeMove(move);
-		    System.out.println(this);
 		} else {
-		    System.out.println("invalid move for given piece, try:");
-		    for (ChessMove valid: pieceMoves(start)) System.out.print(valid + " ");
-		    System.out.print("\n");
+		    System.out.println("invalid move for given piece\n");
 		}
 	    } catch (Exception e) {
-		System.out.println("invalid move syntax");
+		System.out.println(e.getMessage());
 	    }
 	}
     }
@@ -248,12 +297,14 @@ public class ChessBoard {
     
     public static void main(String[] a) {
 	ChessBoard b = new ChessBoard();
-	//b.setup();
-	b.place(BISHOP, WHITE, "f3");
+	b.setup();
 	b.playerMoveCycle();
-	/*b.makeMove("g7", "g3");
+	/*b.place(WHITE, QUEEN, "e4");
+	b.place(BLACK, PAWN, "e8");
 	pr(b);
-	for (ChessMove cm: b.pieceMoves("e1")) pr(cm);*/
+	pr(b.toString("e4"));
+	prll(Chess.queenMask(b.getAll(), ChessMove.toIndex("e4")));*/
+
     }
 
     static void pr(Object s) {

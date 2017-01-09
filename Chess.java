@@ -93,12 +93,15 @@ public class Chess {
     }
 
     private static void pawnMask(int position) {
+	if (position/8<7) pawnMasks[position][0] = (1L<<(position+8));
+	if (position/8==1) pawnMasks[position][0] += (1L<<(position+16));
+	if (position/8>0) pawnMasks[position][2] = (1L<<(position-8));
+	if (position/8==6) pawnMasks[position][2] += (1L<<(position-16));
+
 	long pawnWCapMask = 0L;
 	long pawnBCapMask = 0L;
 	int[][] pawnWCapMoves = {{1, 1}, {-1, 1}};
 	int[][] pawnBCapMoves = {{1, -1}, {-1, -1}};
-	if (position/8<7) pawnMasks[position][0] = (1L<<(position+8));
-	if (position/8>0) pawnMasks[position][2] = (1L<<(position-8));
 	outer: for (int i=0; i<2; i++) {
 	    for (int j=0; j<2; j++) {
 		pawnWCapMoves[i][j]+= (j==0)? position%8: position/8;
@@ -149,6 +152,13 @@ public class Chess {
     public static long queenMask(long occ, int i) {
 	return bishopMask(occ, i) | rookMask(occ, i);
     }
+    //gives mask of available enpassant move for pawn if existant
+    public static long passantMask(int color, int passant, int i) {
+	if (Math.abs(passant-i)==1) return (1L<<(passant+8*color));
+	return 0L;
+    }
+	
+	    
     
     public static void main(String[] args) {
 	prl(knightMasks[0]);
