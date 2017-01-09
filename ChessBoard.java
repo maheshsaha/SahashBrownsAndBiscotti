@@ -21,6 +21,10 @@ public class ChessBoard {
     public final long[] bbWhite;
     public final long[] bbBlack;
 
+    // index of enpassantable square if exists, -1 otherwise
+    public int passant;
+
+    private void resetPassant() {passant = -1;}
     /**
      *Default constructor 
      *Initializes the default board layout
@@ -29,6 +33,7 @@ public class ChessBoard {
     public ChessBoard(){
 	bbWhite = new long[6];
 	bbBlack = new long[6];
+	resetPassant();
     }
 
     public void setup() {
@@ -122,20 +127,42 @@ public class ChessBoard {
     }
     
     public void makeMove(ChessMove move) {
+	
+	
 	int startType = typeAtPosition(move.start);
 	int endType = typeAtPosition(move.end);
-	switch (colorAtPosition(move.start)) {
+	int color = colorAtPosition(move.start);
+	switch (color) {
 	case WHITE:
 	    bbWhite[startType] |= (1L << move.end); //add white piece at end
 	    bbWhite[startType] &= -1*((1L << move.start)+1L);//remove white piece at start
-	    bbBlack[endType] &= -1 *((1L << move.end)+1L);//remove black piece at end
+	    if (endType!=-1) bbBlack[endType] &= -1 *((1L << move.end)+1L);//remove black piece at end
 	    break;
 	case BLACK:
 	    bbBlack[startType] |= (1L << move.end);//add black piece at end
 	    bbBlack[startType] &= -1*((1L << move.start)+1L);//remove black piece at start
-	    bbBlack[endType] &= -1 *((1L << move.end)+1L);//remove white piece at end
+	    if (endType!=-1) bbWhite[endType] &= -1 *((1L << move.end)+1L);//remove white piece at end
 	    break;
+	}
+
+
+	//if a pawn just moved in front of a passantable square, kill the pawn there
+	if (startType==PAWN && move.end-8*color==passant) {
+	    switch (color) {
+	    case WHITE:
+		bbBlack[PAWN] &= -1*((1L << passant)+1L);
+		break;
+	    case BLACK:
+		bbWhite[PAWN] &= -1*((1L << passant)+1L);
+		break;
 	    }
+	}
+	
+	resetPassant();
+	//if you double push a pawn, set its endpoint to be the enpassant square
+	if (startType==PAWN && Math.abs(move.start/8-move.end/8)==2) {
+	    passant = move.end;
+	}
     }
     public void makeMove(String start, String end) {
 	makeMove(new ChessMove(start, end));
@@ -185,6 +212,7 @@ public class ChessBoard {
 	case PAWN:
 	    moveMask = Chess.pawnMasks[pos][1-color] & ~all;
 	    captureMask = Chess.pawnMasks[pos][2-color] & opp;
+	    captureMask |= Chess.passantMask(color, passant, pos);
 	    break;
 	case KNIGHT:
 	    moveMask = Chess.knightMasks[pos] & ~all;
@@ -261,7 +289,7 @@ public class ChessBoard {
 		    System.out.println("invalid move for given piece\n");
 		}
 	    } catch (Exception e) {
-		System.out.println("invalid move syntax\n");
+		System.out.println(e.getMessage());
 	    }
 	}
     }
