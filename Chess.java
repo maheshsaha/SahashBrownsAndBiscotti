@@ -56,7 +56,7 @@ public class Chess {
 	forwardMasks[position] = forwardMask - (1L<<position);
 	backwardMasks[position] = backwardMask - (1L<<position);
     }
-
+    // Creates two longs, h and v mask. Represent H mask as row containing position and V mask as a column with position. 
     private static void parallelMask(int position) {
 	long horizontalMask = ((1L<<8)-1L)<<(position/8*8);
 	long verticalMask = (1L<<position%8)*72340172838076673L;
@@ -65,7 +65,7 @@ public class Chess {
 	columnMasks[position] = verticalMask - (1L<<position);
     }
 
-
+    // Populates array with possible moves
     private static void knightMask(int position) {
 	long knightMask = 0L;
 	int[][] knightMoves = {{2, 1}, {2, -1}, {1, -2}, {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}, {1, 2}};
@@ -91,12 +91,12 @@ public class Chess {
 	}
 	kingMasks[position] = kingMask;
     }
-
+    // Body adds moves to mask 
     private static void pawnMask(int position) {
-	if (position/8<7) pawnMasks[position][0] = (1L<<(position+8));
-	if (position/8==1) pawnMasks[position][0] += (1L<<(position+16));
-	if (position/8>0) pawnMasks[position][2] = (1L<<(position-8));
-	if (position/8==6) pawnMasks[position][2] += (1L<<(position-16));
+	if (position/8<7) pawnMasks[position][0] = (1L<<(position+8));//Assign move forward (white)
+	if (position/8==1) pawnMasks[position][0] += (1L<<(position+16));//Assign move forward two spaces (white)
+	if (position/8>0) pawnMasks[position][2] = (1L<<(position-8));//Assign move forward (black)
+	if (position/8==6) pawnMasks[position][2] += (1L<<(position-16));//Assign move forward two spaces (black)
 
 	long pawnWCapMask = 0L;
 	long pawnBCapMask = 0L;
@@ -126,15 +126,15 @@ public class Chess {
 	ChessBoard b = new ChessBoard();
 	return b.toString(l);
     }
-    
+    // Made for sliding moves (ie: rook moving across board)
     public static long directionMask(long occ, int direction, int i) {
-	long mask = masks[direction%4][i];
-	long moves = occ & mask;
+	long mask = masks[direction][i];
+	long moves = occ & mask; //Mask of all present pieces along considering row
 	long reverse = Long.reverse(moves);
 	moves -= 2 * (1L<<i);
 	reverse -= 2* (1L<<(63-i));
 	moves ^= Long.reverse(reverse);
-	return moves & mask;
+	return moves & mask;//Returns valid moves for sliding piece
     }
 
     public static long bishopMask(long occ, int i) {
@@ -147,11 +147,11 @@ public class Chess {
 	return bishopMask(occ, i) | rookMask(occ, i);
     }
     //gives mask of available enpassant move for pawn if existant
-    public static long passantMask(int color, int passant, int i) {
+    public static long passantMask(int color, int passant, int i) {// Checks stored double move position
 	if (Math.abs(passant-i)==1) return (1L<<(passant+8*color));
 	return 0L;
     }
-
+    
 
     //i don't know if there is a more effecient way to do this, lmk if you think of one
     public static long rayMask(int from, int to) {

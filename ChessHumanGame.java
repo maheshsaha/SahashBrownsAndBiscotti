@@ -29,8 +29,8 @@ public class ChessHumanGame {
 		    throw new IllegalArgumentException("No piece at specified position");
 		if (((1L<<start) & b.getByColor(-turn)) != 0L)
 		    throw new IllegalArgumentException("Choose a " + (turn==ChessBoard.WHITE? "white": "black") + " piece");
-		moves x= b.pieceMoves(start);
-		if (b.typeAtPosition(start) != ChessBoard.KING) moves = ChessBoard.applyMask(moves, b.getByColor(turn), checkMask);
+		moves = b.pieceMoves(start);
+		if (b.typeAtPosition(start) != ChessBoard.KING) moves = ChessBoard.applyMask(moves,b.getByColor(turn), checkMask); 
 		if (moves.size()==0)
 		    throw new IllegalArgumentException("No moves available for specified piece");
 	    } catch (IllegalArgumentException iae) {
