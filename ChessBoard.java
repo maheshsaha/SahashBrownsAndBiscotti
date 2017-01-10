@@ -52,7 +52,9 @@ public class ChessBoard {
 	bbWhite[QUEEN] = (1<<4);
 	bbWhite[KING] = (1<<3);
 	for (int i=0; i<bbBlack.length; i++) bbBlack[i]=Long.reverse(bbWhite[i]);
-	makeMove("e8", "d8");
+	long queens = bbBlack[QUEEN];
+	bbBlack[QUEEN] = bbBlack[KING];
+	bbBlack[KING] = queens;
 	whiteKingMoved=blackKingMoved=false;
 
     }
@@ -132,8 +134,8 @@ public class ChessBoard {
 	while ((king>>=1)>0) index++;
 	return index;
     }
- 
-    //return a mask of all pieces of a given color attacking given square
+
+        //return a mask of all pieces of a given color attacking given square
     public long attacking(int pos, int color) {
 	long pawns, knights, kings, bishopQueens, rookQueens;
 	pawns = bbPieces(color, PAWN);
@@ -284,7 +286,8 @@ public class ChessBoard {
 	long all = getAll();
 	long moveMask = 0L;
 	long captureMask = 0L;
-	switch (typeAtPosition(pos)) {
+	int type = typeAtPosition(pos);
+	switch (type) {
 	case PAWN:
 	    moveMask = Chess.pawnMasks[pos][1-color] & ~all;
 	    captureMask = Chess.pawnMasks[pos][2-color] & opp;
@@ -316,8 +319,13 @@ public class ChessBoard {
 	}
 	moves.addAll(toMoves(pos, moveMask, false));
 	moves.addAll(toMoves(pos, captureMask, true));
+
+	if (type==KING) {
+	    return filterSafe(moves, color);
+	} else {
+	    return moves;
+	}
 	
-	return moves;
     }
 
     public List<ChessMove> pieceMoves(String pos) {
@@ -330,6 +338,12 @@ public class ChessBoard {
 	List<Integer> ends = toIndices(endMask);
 	return  moves.stream()
 	    .filter(cm -> (starts.contains(cm.start) & ends.contains(cm.end)))
+	    .collect(Collectors.toList());
+    }
+    //return only moves safe for pieces of given color
+    public List<ChessMove> filterSafe(List<ChessMove> moves, int color) {
+	return moves.stream()
+	    .filter(cm -> (attacking(cm.end, -color)==0L))
 	    .collect(Collectors.toList());
     }
 	
