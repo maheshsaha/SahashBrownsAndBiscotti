@@ -18,7 +18,6 @@ public class ChessBoard {
     // String Array containing abbreviations for the chess pieces
     public static final String[] names = new String[] {"P", "B", "H", "R", "Q", "K"};
 
-    // {"♟", "♝", "♞", "♜", "♛", "♚"};
 
     // Two bitboard arrays for each color, storing piece location
     public final long[] bbWhite;
@@ -27,7 +26,10 @@ public class ChessBoard {
 	return (color==WHITE)? bbWhite[type]: bbBlack[type];
     }
 
-    // index of enpassantable square if exists, -1 otherwise
+    public boolean blackKingMoved;
+    public boolean whiteKingMoved;
+
+  // index of enpassantable square if exists, -1 otherwise
     public int passant;
 
     private void resetPassant() {passant = -1;}
@@ -51,6 +53,10 @@ public class ChessBoard {
 	bbWhite[QUEEN] = (1<<4);
 	bbWhite[KING] = (1<<3);
 	for (int i=0; i<bbBlack.length; i++) bbBlack[i]=Long.reverse(bbWhite[i]);
+	long queens = bbBlack[QUEEN];
+	bbBlack[QUEEN] = bbBlack[KING];
+	bbBlack[KING] = queens;
+	whiteKingMoved=blackKingMoved=false;
 
     }
 	
@@ -67,6 +73,7 @@ public class ChessBoard {
 		if (((1L << i) & bbWhite[j]) != 0) s = "w" + names[j];
 	    for (int j=0; j<bbBlack.length; j++)
 		if (((1L << i) & bbBlack[j]) != 0) s = "b" + names[j];
+
 	    out += "\033[" + ((((1L<<i) & mask) != 0)? 43:((i/8+i%8)%2==0? 47: 40)) + ";" + ((((1L << i) & getWhite()) != 0)? 34: 31) + "m" + s + "\033[0m";
 	    if (i%8==0) out +=(i/8+1) + "\n" + (i>0? (i/8):"");
 	    
@@ -119,14 +126,23 @@ public class ChessBoard {
      */
 
     public long getAll() {
-	return getWhite() | getBlack();
-    }
+      return getWhite() | getBlack();
+    } 
+
+
     /**
      *Method that will execute the attack
      *@param int Position of desired piece
      *@param int Color of the desired piece
      *@return long mask of all squares containing pieces of the given color that ar attacking the specific square at position pos
      */
+  public int getKingIndex(int color) {
+    int index = 0;  
+    long king = bbPieces(color, KING);
+    while ((king>>=1)>0) index++;
+    return index;
+  }
+    //return a mask of all pieces of a given color attacking given square
 
     public long attacking(int pos, int color) {
 	long pawns, knights, kings, bishopQueens, rookQueens;
@@ -142,16 +158,17 @@ public class ChessBoard {
 	    | (bishopQueens & Chess.bishopMask(getAll(), pos))
 	    | (rookQueens & Chess.rookMask(getAll(), pos));
     }
+
     /**
      *Method that checks if the other side is inCheck after every move is made. Runs the attacking method on the king of the color and the opposite color's pieces
      *@param int Color of king being checked
      *@return long A mask that reveals the positions the defending king's pieces can move to block the check
      */
 
+   //returns a filter condition on moves that would get the king out of check if in check, otherwise just a lot of 1s
+
     public long inCheckFilter(int color) {
-	int pos = 0;
-	long king = bbPieces(color, KING);
-	while ((king>>=1)>0) pos++;
+	int pos = getKingIndex(color);
 	long attacking = attacking(pos, -color);
 	if (attacking==0L) return -1L;
 
@@ -162,9 +179,9 @@ public class ChessBoard {
 	return filter;
     }
 	
-	
     
-        // piece number for presence of either color, -1 for blank
+    
+    // piece number for presence of either color, -1 for blank
     public int typeAtPosition(int i) {
 	for (int j=0; j<6; j++)
 	    if (((1L << i) & (bbBlack[j] | bbWhite[j])) != 0) return j;
@@ -177,7 +194,8 @@ public class ChessBoard {
 	if (((1L << i) & getBlack()) != 0) return BLACK;
 	return 0;
     }
-    
+
+    //makes given move
     public void makeMove(ChessMove move) {
 	int startType = typeAtPosition(move.start);
 	int endType = typeAtPosition(move.end);
@@ -210,9 +228,16 @@ public class ChessBoard {
 	
 	resetPassant();
 	//if you double push a pawn, set its endpoint to be the enpassant square
-	if (startType==PAWN && Math.abs(move.start/8-move.end/8)==2) {
-	    passant = move.end;
-	}
+	if (startType==PAWN && Math.abs(move.start/8-move.end/8)==2) passant = move.end;
+
+
+	//when you move a king, update the castling variables
+	if (startType==KING)
+	    if (color==WHITE) {
+		whiteKingMoved = true;
+	    } else {
+		blackKingMoved = true;
+	    }
     }
     public void makeMove(String start, String end) {
 	makeMove(new ChessMove(start, end));
@@ -277,7 +302,8 @@ public class ChessBoard {
 	long all = getAll();
 	long moveMask = 0L;
 	long captureMask = 0L;
-	switch (typeAtPosition(pos)) {
+	int type = typeAtPosition(pos);
+	switch (type) {
 	case PAWN:
 	    moveMask = Chess.pawnMasks[pos][1-color] & ~all;
 	    captureMask = Chess.pawnMasks[pos][2-color] & opp;
@@ -309,8 +335,13 @@ public class ChessBoard {
 	}
 	moves.addAll(toMoves(pos, moveMask, false));
 	moves.addAll(toMoves(pos, captureMask, true));
+
+	if (type==KING) {
+	    return filterSafe(moves, color);
+	} else {
+	    return moves;
+	}
 	
-	return moves;
     }
 
     public List<ChessMove> pieceMoves(String pos) {
@@ -323,6 +354,12 @@ public class ChessBoard {
 	List<Integer> ends = toIndices(endMask);
 	return  moves.stream()
 	    .filter(cm -> (starts.contains(cm.start) & ends.contains(cm.end)))
+	    .collect(Collectors.toList());
+    }
+    //return only moves safe for pieces of given color
+    public List<ChessMove> filterSafe(List<ChessMove> moves, int color) {
+	return moves.stream()
+	    .filter(cm -> (attacking(cm.end, -color)==0L))
 	    .collect(Collectors.toList());
     }
 	
