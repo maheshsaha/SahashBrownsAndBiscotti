@@ -4,7 +4,7 @@ import java.util.LinkedList;
 public class ChessHumanGame {
     ChessBoard b;
     int turn;
-    long checkMask;
+    //long checkMask;
     List<ChessMove> moves;
     int start;
     int end;
@@ -13,7 +13,7 @@ public class ChessHumanGame {
 	b = new ChessBoard();
 	b.setup();
 	turn = ChessBoard.WHITE;
-	checkMask = -1L;
+	//checkMask = -1L;
 	moves = new LinkedList<>();
 	start = -1;
 	end = -1;
@@ -29,8 +29,8 @@ public class ChessHumanGame {
 		    throw new IllegalArgumentException("No piece at specified position");
 		if (((1L<<start) & b.getByColor(-turn)) != 0L)
 		    throw new IllegalArgumentException("Choose a " + (turn==ChessBoard.WHITE? "white": "black") + " piece");
-		moves x= b.pieceMoves(start);
-		if (b.typeAtPosition(start) != ChessBoard.KING) moves = ChessBoard.applyMask(moves, b.getByColor(turn), checkMask);
+		moves = b.pieceMoves(start);
+		//if (b.typeAtPosition(start) != ChessBoard.KING) moves = ChessBoard.applyMask(moves, b.getByColor(turn), checkMask);
 		if (moves.size()==0)
 		    throw new IllegalArgumentException("No moves available for specified piece");
 	    } catch (IllegalArgumentException iae) {
@@ -62,7 +62,7 @@ public class ChessHumanGame {
 
     void makeTurn() {
 	System.out.println(b);
-	checkMask = b.inCheckFilter(turn);
+	//checkMask = b.inCheckFilter(turn);
 	while (end == -1 || start == -1) {
 	    setStart();
 	    System.out.println(b.toString(ChessBoard.moveMask(moves)|ChessBoard.captureMask(moves)));
@@ -76,7 +76,7 @@ public class ChessHumanGame {
 	    makeTurn();
 	    turn = -1*turn;
 	    end = start = -1;
-	    checkMask = -1L;
+	    // checkMask = -1L;
 	}
     }
     

@@ -44,6 +44,16 @@ public class ChessBoard {
 	resetPassant();
     }
 
+    public ChessBoard(ChessBoard other) {
+	this();
+	System.arraycopy(other.bbWhite, 0, bbWhite, 0, 6);
+	System.arraycopy(other.bbBlack, 0, bbBlack, 0, 6);
+    }
+
+    public ChessBoard clone() {
+	return new ChessBoard(this);
+    }
+
     public void setup() {
 	bbWhite[PAWN] = ((1<<8)-1)<<8;
 	bbWhite[BISHOP] = (1<<2) + (1<<5);
@@ -319,12 +329,13 @@ public class ChessBoard {
 	}
 	moves.addAll(toMoves(pos, moveMask, false));
 	moves.addAll(toMoves(pos, captureMask, true));
-
-	if (type==KING) {
+	return filterSafe(moves, color);
+	/*if (type==KING) {
 	    return filterSafe(moves, color);
 	} else {
 	    return moves;
-	}
+	    }*/
+	
 	
     }
 
@@ -343,7 +354,10 @@ public class ChessBoard {
     //return only moves safe for pieces of given color
     public List<ChessMove> filterSafe(List<ChessMove> moves, int color) {
 	return moves.stream()
-	    .filter(cm -> (attacking(cm.end, -color)==0L))
+	    .filter(cm -> {
+		    ChessBoard c = clone();
+		    c.makeMove(cm);
+		    return c.attacking(c.getKingIndex(color), -color)==0L;})
 	    .collect(Collectors.toList());
     }
 	
