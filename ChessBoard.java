@@ -18,7 +18,6 @@ public class ChessBoard {
     // String Array containing abbreviations for the chess pieces
     public static final String[] names = new String[] {"P", "B", "H", "R", "Q", "K"};
 
-    // {"♟", "♝", "♞", "♜", "♛", "♚"};
 
     // Two bitboard arrays for each color, storing piece location
     public final long[] bbWhite;
@@ -26,6 +25,9 @@ public class ChessBoard {
     private long bbPieces(int color, int type) {
 	return (color==WHITE)? bbWhite[type]: bbBlack[type];
     }
+
+    public boolean blackKingMoved;
+    public boolean whiteKingMoved;
 
     // index of enpassantable square if exists, -1 otherwise
     public int passant;
@@ -51,6 +53,8 @@ public class ChessBoard {
 	bbWhite[QUEEN] = (1<<4);
 	bbWhite[KING] = (1<<3);
 	for (int i=0; i<bbBlack.length; i++) bbBlack[i]=Long.reverse(bbWhite[i]);
+	makeMove("e8", "d8");
+	whiteKingMoved=blackKingMoved=false;
 
     }
 	
@@ -67,6 +71,7 @@ public class ChessBoard {
 		if (((1L << i) & bbWhite[j]) != 0) s = "w" + names[j];
 	    for (int j=0; j<bbBlack.length; j++)
 		if (((1L << i) & bbBlack[j]) != 0) s = "b" + names[j];
+	    
 	    out += "\033[" + ((((1L<<i) & mask) != 0)? 43:((i/8+i%8)%2==0? 47: 40)) + ";" + ((((1L << i) & getWhite()) != 0)? 34: 31) + "m" + s + "\033[0m";
 	    if (i%8==0) out +=(i/8+1) + "\n" + (i>0? (i/8):"");
 	    
@@ -127,7 +132,13 @@ public class ChessBoard {
      *@param int Color of the desired piece
      *@return long mask of all squares containing pieces of the given color that ar attacking the specific square at position pos
      */
-
+    public int getKingIndex(int color){
+	int index = 0;
+	long king = bbPieces(color, KING);
+	while ((king>>=1)>0) index++;
+	return index;
+    }
+    
     public long attacking(int pos, int color) {
 	long pawns, knights, kings, bishopQueens, rookQueens;
 	pawns = bbPieces(color, PAWN);
@@ -149,9 +160,7 @@ public class ChessBoard {
      */
 
     public long inCheckFilter(int color) {
-	int pos = 0;
-	long king = bbPieces(color, KING);
-	while ((king>>=1)>0) pos++;
+	int pos = getKingIndex(color);
 	long attacking = attacking(pos, -color);
 	if (attacking==0L) return -1L;
 
@@ -210,9 +219,15 @@ public class ChessBoard {
 	
 	resetPassant();
 	//if you double push a pawn, set its endpoint to be the enpassant square
-	if (startType==PAWN && Math.abs(move.start/8-move.end/8)==2) {
-	    passant = move.end;
-	}
+	if (startType==PAWN && Math.abs(move.start/8-move.end/8)==2) passant = move.end;
+
+	//when you move a king, update the castiling variables
+	if (startType==KING)
+	    if(color==WHITE) {
+		whiteKingMoved = true;
+	    } else {
+		blackKingMoved = true;
+	    }
     }
     public void makeMove(String start, String end) {
 	makeMove(new ChessMove(start, end));
