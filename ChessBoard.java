@@ -264,7 +264,8 @@ public class ChessBoard {
 	}
 	return ints;
     }
-	
+
+    //the following four methods deal with conversion between move lists and bit masks
     public static List<ChessMove> toMoves(int start, long ends, boolean capture) {
 	List<ChessMove> moves = new LinkedList<>();
 	for (Integer end: toIndices(ends))
@@ -272,6 +273,14 @@ public class ChessBoard {
 	return moves;
     }
 
+    public static long toMask(List<ChessMove> moves) {
+	long mask = 0L;
+	for (ChessMove move: moves) {
+	    mask += (1L<<move.end);
+	}
+	return mask;
+    }
+    
     public static long moveMask(List<ChessMove> moves) {
 	long moveMask = 0L;
 	for (ChessMove move: moves) {
@@ -286,7 +295,7 @@ public class ChessBoard {
 	}
 	return captureMask;
     }
-    
+
     //it may seem convoluted to generate masks, turn them into lists of moves, then convert them back to masks, but its more effecient to store the list because they maintain origin and capture imformation, and regeneration to resotre that information is extremely costly
     public List<ChessMove>  pieceMoves(int pos) {
 	List<ChessMove> moves = new LinkedList<>();
@@ -319,6 +328,7 @@ public class ChessBoard {
 	    break;
 	case QUEEN:
 	    long queenMask = Chess.queenMask(all, pos);
+	    prll(queenMask);
 	    moveMask = queenMask & ~all;
 	    captureMask = queenMask & opp;
 	    break;
@@ -363,11 +373,8 @@ public class ChessBoard {
 	
     public static void main(String[] a) {
 	ChessBoard b = new ChessBoard();
-	b.setup();
-	b.makeMove("d2", "d4");
-	b.makeMove("e7", "e5");
-	pr(b.toString(captureMask(b.pieceMoves("d4"))));
-
+	b.place(WHITE, QUEEN, "d6");
+	pr(b.toString(Chess.directionMask(b.getAll(), 1, ChessMove.toIndex("d6"))));
     }
 
 
