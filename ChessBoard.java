@@ -34,6 +34,18 @@ public class ChessBoard {
 
     private void resetPassant() {passant = -1;}
 
+    public final List<Integer> capturedWhitePieces;
+    public final List<Integer> capturedBlackPieces;
+    public List<Integer> capturedPieces(int color) {
+	if (color == WHITE) return capturedWhitePieces;
+	if (color == BLACK) return capturedBlackPieces;
+	return new LinkedList<>();
+    }
+    // 	capturedWhitePieces, capturedBlackPieces};
+
+    public ChessMoveHistory history;
+
+    public void initHistory() {history = new ChessMoveHistory(this);}
     /**
      *Default constructor 
      *Initializes the default board layout
@@ -42,7 +54,21 @@ public class ChessBoard {
     public ChessBoard(){
 	bbWhite = new long[6];
 	bbBlack = new long[6];
+	capturedWhitePieces = new LinkedList<>();
+	capturedBlackPieces = new LinkedList<>();
 	resetPassant();
+	initHistory();
+    }
+
+    public ChessBoard(ChessBoard other) {
+	this();
+	System.arraycopy(other.bbWhite, 0, bbWhite, 0, 6);
+	System.arraycopy(other.bbBlack, 0, bbBlack, 0, 6);
+	initHistory();
+    }
+
+    public ChessBoard clone() {
+	return new ChessBoard(this);
     }
 
     public void setup() {
@@ -57,6 +83,7 @@ public class ChessBoard {
 	bbBlack[QUEEN] = bbBlack[KING];
 	bbBlack[KING] = queens;
 	whiteKingMoved=blackKingMoved=false;
+	initHistory();
 
     }
 	
@@ -198,9 +225,10 @@ public class ChessBoard {
     //makes given move
     public void makeMove(ChessMove move) {
 	int startType = typeAtPosition(move.start);
+	if (startType==0) return;
 	int endType = typeAtPosition(move.end);
 	int color = colorAtPosition(move.start);
-	switch (color) {
+	switch (color) { //could technically be a conditional, but this leaves room to change null move conditions
 	case WHITE:
 	    bbWhite[startType] |= (1L << move.end); //add white piece at end
 	    bbWhite[startType] &= -1*((1L << move.start)+1L);//remove white piece at start
@@ -213,6 +241,10 @@ public class ChessBoard {
 	    break;
 	}
 
+	//all the following come after the actual move making in case of unchecked exceptions during bitboard manipulation
+	
+	//if a capture, then add to the enemy's captured list this type of capture piece
+	if (move.capture) capturedPieces((color + 1)/2).add(endType);
 
 	//if a pawn just moved in front of a passantable square, kill the pawn there
 	if (startType==PAWN && move.end-8*color==passant) {
@@ -270,7 +302,8 @@ public class ChessBoard {
 	}
 	return ints;
     }
-	
+
+    //the following four methods deal with conversion between move lists and bit masks
     public static List<ChessMove> toMoves(int start, long ends, boolean capture) {
 	List<ChessMove> moves = new LinkedList<>();
 	for (Integer end: toIndices(ends))
@@ -278,6 +311,14 @@ public class ChessBoard {
 	return moves;
     }
 
+    public static long toMask(List<ChessMove> moves) {
+	long mask = 0L;
+	for (ChessMove move: moves) {
+	    mask += (1L<<move.end);
+	}
+	return mask;
+    }
+    
     public static long moveMask(List<ChessMove> moves) {
 	long moveMask = 0L;
 	for (ChessMove move: moves) {
@@ -292,7 +333,7 @@ public class ChessBoard {
 	}
 	return captureMask;
     }
-    
+
     //it may seem convoluted to generate masks, turn them into lists of moves, then convert them back to masks, but its more effecient to store the list because they maintain origin and capture imformation, and regeneration to resotre that information is extremely costly
     public List<ChessMove>  pieceMoves(int pos) {
 	List<ChessMove> moves = new LinkedList<>();
@@ -335,12 +376,13 @@ public class ChessBoard {
 	}
 	moves.addAll(toMoves(pos, moveMask, false));
 	moves.addAll(toMoves(pos, captureMask, true));
-
-	if (type==KING) {
+	return filterSafe(moves, color);
+	/*if (type==KING) {
 	    return filterSafe(moves, color);
 	} else {
 	    return moves;
-	}
+	    }*/
+	
 	
     }
 
@@ -359,17 +401,17 @@ public class ChessBoard {
     //return only moves safe for pieces of given color
     public List<ChessMove> filterSafe(List<ChessMove> moves, int color) {
 	return moves.stream()
-	    .filter(cm -> (attacking(cm.end, -color)==0L))
+	    .filter(cm -> {
+		    ChessBoard c = clone();
+		    c.makeMove(cm);
+		    return c.attacking(c.getKingIndex(color), -color)==0L;})
 	    .collect(Collectors.toList());
     }
 	
     public static void main(String[] a) {
 	ChessBoard b = new ChessBoard();
-	b.setup();
-	b.makeMove("d2", "d4");
-	b.makeMove("e7", "e5");
-	pr(b.toString(captureMask(b.pieceMoves("d4"))));
-
+	b.place(WHITE, QUEEN, "d6");
+	pr(b.toString(Chess.directionMask(b.getAll(), 1, ChessMove.toIndex("d6"))));
     }
 
 

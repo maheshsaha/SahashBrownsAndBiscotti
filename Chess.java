@@ -1,8 +1,5 @@
 public class Chess {
     //never meant to be inititated, no instance methods.
-
-    
-    
     
     //diagonal masks
     public static long[] rowMasks = new long[64];
@@ -52,7 +49,6 @@ public class Chess {
 	for (int i=0; i<(8-Math.abs(backward-7)); i++) {
 	    backwardMask += 1L<<(7*i+start);
 	}
-	
 	forwardMasks[position] = forwardMask - (1L<<position);
 	backwardMasks[position] = backwardMask - (1L<<position);
     }
@@ -176,7 +172,6 @@ public class Chess {
 	
     
     public static void main(String[] args) {
-	prll(rayMask(20, 21));
     }
 
     static void pr(Object o) {
