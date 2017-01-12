@@ -130,7 +130,6 @@ public class Chess {
 	moves -= 2 * (1L<<i);
 	reverse -= 2* (1L<<(63-i));
 	moves ^= Long.reverse(reverse);
-	pr("mask in direction " + direction);
 	return moves & mask;
     }
 

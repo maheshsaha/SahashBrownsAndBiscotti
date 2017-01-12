@@ -105,7 +105,7 @@ public class ChessHumanGame {
 	if (b.attacking(b.getKingIndex(turn), -turn)==0L) {
 	    System.out.println("Stalemate!");
 	} else {
-	    System.out.println("Checkmate! Win for " + (turn==ChessBoard.WHITE? "white": "black"));
+	    System.out.println("Checkmate! Win for " + (turn==ChessBoard.BLACK? "white": "black"));
 	}
     }
     

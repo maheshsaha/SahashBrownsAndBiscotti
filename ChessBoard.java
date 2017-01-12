@@ -33,6 +33,18 @@ public class ChessBoard {
 
     private void resetPassant() {passant = -1;}
 
+    public final List<Integer> capturedWhitePieces;
+    public final List<Integer> capturedBlackPieces;
+    public List<Integer> capturedPieces(int color) {
+	if (color == WHITE) return capturedWhitePieces;
+	if (color == BLACK) return capturedBlackPieces;
+	return new LinkedList<>();
+    }
+    // 	capturedWhitePieces, capturedBlackPieces};
+
+    public ChessMoveHistory history;
+
+    public void initHistory() {history = new ChessMoveHistory(this);}
     /**
      *Default constructor 
      *Initializes the default board layout
@@ -41,13 +53,17 @@ public class ChessBoard {
     public ChessBoard(){
 	bbWhite = new long[6];
 	bbBlack = new long[6];
+	capturedWhitePieces = new LinkedList<>();
+	capturedBlackPieces = new LinkedList<>();
 	resetPassant();
+	initHistory();
     }
 
     public ChessBoard(ChessBoard other) {
 	this();
 	System.arraycopy(other.bbWhite, 0, bbWhite, 0, 6);
 	System.arraycopy(other.bbBlack, 0, bbBlack, 0, 6);
+	initHistory();
     }
 
     public ChessBoard clone() {
@@ -66,6 +82,7 @@ public class ChessBoard {
 	bbBlack[QUEEN] = bbBlack[KING];
 	bbBlack[KING] = queens;
 	whiteKingMoved=blackKingMoved=false;
+	initHistory();
 
     }
 	
@@ -193,9 +210,10 @@ public class ChessBoard {
     //makes given move
     public void makeMove(ChessMove move) {
 	int startType = typeAtPosition(move.start);
+	if (startType==0) return;
 	int endType = typeAtPosition(move.end);
 	int color = colorAtPosition(move.start);
-	switch (color) {
+	switch (color) { //could technically be a conditional, but this leaves room to change null move conditions
 	case WHITE:
 	    bbWhite[startType] |= (1L << move.end); //add white piece at end
 	    bbWhite[startType] &= -1*((1L << move.start)+1L);//remove white piece at start
@@ -208,6 +226,10 @@ public class ChessBoard {
 	    break;
 	}
 
+	//all the following come after the actual move making in case of unchecked exceptions during bitboard manipulation
+	
+	//if a capture, then add to the enemy's captured list this type of capture piece
+	if (move.capture) capturedPieces((color + 1)/2).add(endType);
 
 	//if a pawn just moved in front of a passantable square, kill the pawn there
 	if (startType==PAWN && move.end-8*color==passant) {
@@ -328,7 +350,6 @@ public class ChessBoard {
 	    break;
 	case QUEEN:
 	    long queenMask = Chess.queenMask(all, pos);
-	    prll(queenMask);
 	    moveMask = queenMask & ~all;
 	    captureMask = queenMask & opp;
 	    break;
