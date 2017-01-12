@@ -40,4 +40,53 @@ public class ChessGui extends JPanel {
 	// 0 = bottom, size-1 = top
 	private List<Piece> pieces = new ArrayList<Piece>();
 
+    	public ChessGui() {
+		// load and set background image
+		URL urlBackgroundImg = getClass().getResource("/img/board.png");
+		this.imgBackground = new ImageIcon(urlBackgroundImg).getImage();
+
+		// create application frame and set visible
+		//
+		JFrame f = new JFrame();
+		f.setVisible(true);
+		f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		f.add(this);
+		f.setResizable(false);
+		f.setSize(this.imgBackground.getWidth(null), this.imgBackground.getHeight(null));
+	}
+
+
+	private Image getImageForPiece(int color, int type) {
+		String filename = "";
+
+		filename += (color == COLOR_WHITE ? "w" : "b");
+		switch (type) {
+			case TYPE_BISHOP:
+				filename += "b";
+				break;
+			case TYPE_KING:
+				filename += "k";
+				break;
+			case TYPE_KNIGHT:
+				filename += "n";
+				break;
+			case TYPE_PAWN:
+				filename += "p";
+				break;
+			case TYPE_QUEEN:
+				filename += "q";
+				break;
+			case TYPE_ROOK:
+				filename += "r";
+				break;
+		}
+		filename += ".png";
+
+		URL urlPieceImg = getClass().getResource("/img/" + filename);
+		return new ImageIcon(urlPieceImg).getImage();
+	}
+
+	public static void main(String[] args) {
+		new ChessGui();
+	}
 }
