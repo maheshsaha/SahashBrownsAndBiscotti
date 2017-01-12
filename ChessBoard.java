@@ -18,6 +18,7 @@ public class ChessBoard {
     // String Array containing abbreviations for the chess pieces
     public static final String[] names = new String[] {"P", "B", "H", "R", "Q", "K"};
 
+
     // Two bitboard arrays for each color, storing piece location
     public final long[] bbWhite;
     public final long[] bbBlack;
@@ -27,8 +28,8 @@ public class ChessBoard {
 
     public boolean blackKingMoved;
     public boolean whiteKingMoved;
-    
-    // index of enpassantable square if exists, -1 otherwise
+
+  // index of enpassantable square if exists, -1 otherwise
     public int passant;
 
     private void resetPassant() {passant = -1;}
@@ -152,17 +153,24 @@ public class ChessBoard {
      */
 
     public long getAll() {
-	return getWhite() | getBlack();
-    }
+      return getWhite() | getBlack();
+    } 
 
-    public int getKingIndex(int color) {
-	int index = 0;
-	long king = bbPieces(color, KING);
-	while ((king>>=1)>0) index++;
-	return index;
-    }
 
-        //return a mask of all pieces of a given color attacking given square
+    /**
+     *Method that will execute the attack
+     *@param int Position of desired piece
+     *@param int Color of the desired piece
+     *@return long mask of all squares containing pieces of the given color that ar attacking the specific square at position pos
+     */
+  public int getKingIndex(int color) {
+    int index = 0;  
+    long king = bbPieces(color, KING);
+    while ((king>>=1)>0) index++;
+    return index;
+  }
+    //return a mask of all pieces of a given color attacking given square
+
     public long attacking(int pos, int color) {
 	long pawns, knights, kings, bishopQueens, rookQueens;
 	pawns = bbPieces(color, PAWN);
@@ -178,7 +186,14 @@ public class ChessBoard {
 	    | (rookQueens & Chess.rookMask(getAll(), pos));
     }
 
-    //returns a filter condition on moves that would get the king out of check if in check, otherwise just a lot of 1s
+    /**
+     *Method that checks if the other side is inCheck after every move is made. Runs the attacking method on the king of the color and the opposite color's pieces
+     *@param int Color of king being checked
+     *@return long A mask that reveals the positions the defending king's pieces can move to block the check
+     */
+
+   //returns a filter condition on moves that would get the king out of check if in check, otherwise just a lot of 1s
+
     public long inCheckFilter(int color) {
 	int pos = getKingIndex(color);
 	long attacking = attacking(pos, -color);
@@ -246,6 +261,7 @@ public class ChessBoard {
 	resetPassant();
 	//if you double push a pawn, set its endpoint to be the enpassant square
 	if (startType==PAWN && Math.abs(move.start/8-move.end/8)==2) passant = move.end;
+
 
 	//when you move a king, update the castling variables
 	if (startType==KING)
