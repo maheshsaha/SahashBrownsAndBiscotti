@@ -1,6 +1,6 @@
 # SahashBrownsAndBiscotti
-# Mahesh Saha and Josh Turcotti
-# Pd. 09
+<h2> Mahesh Saha and Josh Turcotti <br>
+Pd. 09 </h2>
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  AP CS Final Project - Chess Game
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
