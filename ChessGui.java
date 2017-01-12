@@ -55,7 +55,14 @@ public class ChessGui extends JPanel {
 		f.setSize(this.imgBackground.getWidth(null), this.imgBackground.getHeight(null));
 	}
 
-
+	/**
+	 * load image for given color and type. This method translates the color
+	 * and type information into a filename and loads that particular file.
+	 * 
+	 * @param color color constant
+	 * @param type type constant
+	 * @return image
+	 */
 	private Image getImageForPiece(int color, int type) {
 		String filename = "";
 
@@ -85,8 +92,19 @@ public class ChessGui extends JPanel {
 		URL urlPieceImg = getClass().getResource("/img/" + filename);
 		return new ImageIcon(urlPieceImg).getImage();
 	}
+    
+
+	@Override
+	protected void paintComponent(Graphics g) {
+		g.drawImage(this.imgBackground, 0, 0, null);
+		for (Piece piece : this.pieces) {
+			g.drawImage(piece.getImage(), piece.getX(), piece.getY(), null);
+		}
+	}
 
 	public static void main(String[] args) {
 		new ChessGui();
 	}
+
+
 }
