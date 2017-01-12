@@ -5,9 +5,9 @@
  AP CS Final Project - Chess Game
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-          Must have Java 8 to compile
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+<u> <b> Must have Java 8 to compile </b> </u>
+
 
  ---------------
 | Instructions: |

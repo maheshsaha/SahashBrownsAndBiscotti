@@ -13,10 +13,9 @@
 | Instructions: |
  ---------------
 1) Compile ChessHumanGame.java <br>
-2) Run ChessHumanGame
+2) Run ChessHumanGame 
 
 ================================================================================
-
 Working Features:
 -----------------
 1 v 1 Versus Mode in Chess <br>
@@ -25,7 +24,6 @@ Checkmate <br>
 Stalemate <br>
 
 ================================================================================
-
 To be Implemented:
 ------------------
 Pawn Promotion <br>
