@@ -6,28 +6,28 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-       <b>Must have Java 8 to compile</b>
+          Must have Java 8 to compile
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  ---------------
 | Instructions: |
  ---------------
-1) Compile ChessHumanGame.java
+1) Compile ChessHumanGame.java <br>
 2) Run ChessHumanGame
 
 ================================================================================
 
 Working Features:
 -----------------
-1 v 1 Versus Mode in Chess
-Highlights legal moves for a selected piece
-Checkmate
-Stalemate
+1 v 1 Versus Mode in Chess <br>
+Highlights legal moves for a selected piece <br>
+Checkmate <br>
+Stalemate <br>
 
 ================================================================================
 
 To be Implemented:
 ------------------
-Pawn Promotion
-Castling
-GUI Interaction (Maybe)
+Pawn Promotion <br>
+Castling <br>
+GUI Interaction (Maybe) <br>

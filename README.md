@@ -12,22 +12,20 @@
  ---------------
 | Instructions: |
  ---------------
-1) Compile ChessHumanGame.java \n
-2) Run ChessHumanGame
+1) Compile ChessHumanGame.java <br>
+2) Run ChessHumanGame 
 
 ================================================================================
-
 Working Features:
 -----------------
-1 v 1 Versus Mode in Chess \n
-Highlights legal moves for a selected piece \n
-Checkmate \n
-Stalemate \n
+1 v 1 Versus Mode in Chess <br>
+Highlights legal moves for a selected piece <br>
+Checkmate <br>
+Stalemate <br>
 
 ================================================================================
-
 To be Implemented:
 ------------------
-Pawn Promotion \n
-Castling \n
-GUI Interaction (Maybe) \n
+Pawn Promotion <br>
+Castling <br>
+GUI Interaction (Maybe) <br>
