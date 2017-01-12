@@ -44,7 +44,7 @@ public class Chess {
 	long forwardMask  = 0L;
 	long backwardMask = 0L;
 
-	int start = forward>=0? forward: 8*forward;
+	int start = forward>=0? forward: -8*forward;
 	for (int i=0; i<(8-Math.abs(forward)); i++) {
 	    forwardMask += 1L<<(9*i+start);
 	}
