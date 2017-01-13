@@ -1,24 +1,47 @@
 import java.util.List;
 import java.util.LinkedList;
+import java.util.ArrayList;
 
 public class ChessHumanGame {
     ChessBoard b;
     int turn;
-    long checkMask;
-    List<ChessMove> moves;
+    //long checkMask;
+    List<List<ChessMove>> moves;
     int start;
     int end;
-    
+
+
     ChessHumanGame() {
 	b = new ChessBoard();
 	b.setup();
 	turn = ChessBoard.WHITE;
-	checkMask = -1L;
-	moves = new LinkedList<>();
+	//checkMask = -1L;
+	moves = new ArrayList<List<ChessMove>>(64);
 	start = -1;
 	end = -1;
     }
 
+    void setMoves() {
+	moves.clear();
+	for (int i=0; i<64; i++) {
+	    if (((1L<<i) & b.getAll())!=0L) {
+		moves.add(b.pieceMoves(i));
+	    } else {
+		moves.add(new LinkedList<>());
+	    }
+	}
+    }
+
+    boolean movesAvailable() {
+	for (int i=0; i<64; i++) {
+	    if (moves.get(i).size()!=0)
+		if (((1L<<i) & b.getByColor(turn))!=0L)
+		    return true;
+	}
+	return false;
+    }
+	
+    
     void setStart() {
 	while (start==-1) {
 	    System.out.print("Enter starting square: ");
@@ -29,9 +52,10 @@ public class ChessHumanGame {
 		    throw new IllegalArgumentException("No piece at specified position");
 		if (((1L<<start) & b.getByColor(-turn)) != 0L)
 		    throw new IllegalArgumentException("Choose a " + (turn==ChessBoard.WHITE? "white": "black") + " piece");
-		moves = b.pieceMoves(start);
-		if (b.typeAtPosition(start) != ChessBoard.KING) moves = ChessBoard.applyMask(moves,b.getByColor(turn), checkMask); 
-		if (moves.size()==0)
+
+		//if (b.typeAtPosition(start) != ChessBoard.KING) moves = ChessBoard.applyMask(moves, b.getByColor(turn), checkMask);
+		if (moves.get(start).size()==0)
+
 		    throw new IllegalArgumentException("No moves available for specified piece");
 	    } catch (IllegalArgumentException iae) {
 		System.out.println(iae.getMessage());
@@ -50,7 +74,7 @@ public class ChessHumanGame {
 	    }
 	    try {
 		end = ChessMove.toIndex(sEnd);
-		if (!moves.contains(new ChessMove(start, end)))
+		if (!moves.get(start).contains(new ChessMove(start, end)))
 		    throw new IllegalArgumentException("Invalid move chosen for given piece");
 
 	    } catch (IllegalArgumentException iae) {
@@ -62,21 +86,28 @@ public class ChessHumanGame {
 
     void makeTurn() {
 	System.out.println(b);
-	checkMask = b.inCheckFilter(turn);
+	//checkMask = b.inCheckFilter(turn);
 	while (end == -1 || start == -1) {
 	    setStart();
-	    System.out.println(b.toString(ChessBoard.moveMask(moves)|ChessBoard.captureMask(moves)));
+	    System.out.println(b.toString(ChessBoard.moveMask(moves.get(start))|ChessBoard.captureMask(moves.get(start))));
 	    setEnd();
 	}
 	b.makeMove(new ChessMove(start, end));
     }
 
     void playGame() {
-	while (true) {
+	setMoves();
+	while (movesAvailable()) {
 	    makeTurn();
 	    turn = -1*turn;
 	    end = start = -1;
-	    checkMask = -1L;
+	    setMoves();
+	    // checkMask = -1L;
+	}
+	if (b.attacking(b.getKingIndex(turn), -turn)==0L) {
+	    System.out.println("Stalemate!");
+	} else {
+	    System.out.println("Checkmate! Win for " + (turn==ChessBoard.BLACK? "white": "black"));
 	}
     }
     
