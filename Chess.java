@@ -147,7 +147,23 @@ public class Chess {
 	if (Math.abs(passant-i)==1) return (1L<<(passant+8*color));
 	return 0L;
     }
-    
+
+    public static long castleMask(int color, Board b) {
+	if (color==ChessBoard.WHITE? b.whiteKingMoves: b.blackKingMoved) return 0L;
+	long mask = 0L;
+	int position = (color==ChessBoard.WHITE? 4: 60);
+	if (((b.bbPieces(color, ROOK) & (1L<<(position-4)))!=0L) &
+	    (b.attacking(position) == 0L) &
+	    (b.attacking(position-1) == 0L))
+	    mask += (1L << (position-2));
+	if (((b.bbPieces(color, ROOK) & (1L<<(position+3)))!=0L) &
+	    (b.attacking(position) == 0L) &
+	    (b.attacking(position+1) == 0L))
+	    mask += (1L << (position+2));
+	return mask;
+    }
+	    
+	
 
     //i don't know if there is a more effecient way to do this, lmk if you think of one
     public static long rayMask(int from, int to) {

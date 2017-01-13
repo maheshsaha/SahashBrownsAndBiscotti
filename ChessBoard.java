@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 public class ChessBoard {
     // Default pieces for Chess with unique values so names can be referenced 
     // in the bitboard
+    public static final int EMPTY = -1;
     public static final int PAWN = 0;
     public static final int BISHOP = 1;
     public static final int KNIGHT = 2;
@@ -237,26 +238,28 @@ public class ChessBoard {
 	}
     }
 	    
-	
+    //move piece
+    public void movePiece(int color, int startType, int endType, int start, int end) {
+	switch (color) { //could technically be a conditional, but this leaves room to change null move conditions
+	case WHITE:
+	    bbWhite[startType] |= (1L << end); //add white piece at end
+	    bbWhite[startType] &= -1*((1L << start)+1L);//remove white piece at start
+	    if (endType!=-1) bbBlack[endType] &= -1 *((1L << end)+1L);//remove black piece at end
+	    break;
+	case BLACK:
+	    bbBlack[startType] |= (1L << end);//add black piece at end
+	    bbBlack[startType] &= -1*((1L << start)+1L);//remove black piece at start
+	    if (endType!=-1) bbWhite[endType] &= -1 *((1L << end)+1L);//remove white piece at end
+	    break;
+	}
     
-    //makes given move
+    //moves piece then does all associated weird stuff
     public void makeMove(ChessMove move) {
 	int startType = typeAtPosition(move.start);
 	if (startType==-1) return;
 	int endType = typeAtPosition(move.end);
 	int color = colorAtPosition(move.start);
-	switch (color) { //could technically be a conditional, but this leaves room to change null move conditions
-	case WHITE:
-	    bbWhite[startType] |= (1L << move.end); //add white piece at end
-	    bbWhite[startType] &= -1*((1L << move.start)+1L);//remove white piece at start
-	    if (endType!=-1) bbBlack[endType] &= -1 *((1L << move.end)+1L);//remove black piece at end
-	    break;
-	case BLACK:
-	    bbBlack[startType] |= (1L << move.end);//add black piece at end
-	    bbBlack[startType] &= -1*((1L << move.start)+1L);//remove black piece at start
-	    if (endType!=-1) bbWhite[endType] &= -1 *((1L << move.end)+1L);//remove white piece at end
-	    break;
-	}
+	movePiece(color, startType, endType, move.start, move.end);
 
 	//all the following come after the actual move making in case of unchecked exceptions during bitboard manipulation
 
@@ -290,6 +293,17 @@ public class ChessBoard {
 	    } else {
 		blackKingMoved = true;
 	    }
+
+	//if king castled, then move the rook to accompany
+	if (startType==KING && Math.abs(move.start%8 - move.end%8)>1) {
+	    int position = (color==WHITE? 4: 60);
+	    if (move.start > move.end) {
+		movePiece(color, ROOK, EMPTY, position-4, position-1);
+	    } else {
+		movePiece(color, ROOK, EMPTY, position+3, position+1);
+	    }
+	}
+	    
     }
     public void makeMove(String start, String end) {
 	makeMove(new ChessMove(start, end));
@@ -391,6 +405,7 @@ public class ChessBoard {
 	    break;
 	case KING:
 	    moveMask = Chess.kingMasks[pos] & ~all;
+	    moveMask |= Chess.castleMask(color, this);
 	    captureMask = Chess.kingMasks[pos] & opp;
 	    break;
 	}
