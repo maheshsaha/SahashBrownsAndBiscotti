@@ -23,7 +23,7 @@ public class ChessBoard {
     // Two bitboard arrays for each color, storing piece location
     public final long[] bbWhite;
     public final long[] bbBlack;
-    private long bbPieces(int color, int type) {
+    public long bbPieces(int color, int type) {
 	return (color==WHITE)? bbWhite[type]: bbBlack[type];
     }
 
@@ -252,6 +252,7 @@ public class ChessBoard {
 	    if (endType!=-1) bbWhite[endType] &= -1 *((1L << end)+1L);//remove white piece at end
 	    break;
 	}
+    }
     
     //moves piece then does all associated weird stuff
     public void makeMove(ChessMove move) {
@@ -296,11 +297,11 @@ public class ChessBoard {
 
 	//if king castled, then move the rook to accompany
 	if (startType==KING && Math.abs(move.start%8 - move.end%8)>1) {
-	    int position = (color==WHITE? 4: 60);
+	    int position = (color==WHITE? 3: 59);
 	    if (move.start > move.end) {
-		movePiece(color, ROOK, EMPTY, position-4, position-1);
+		movePiece(color, ROOK, EMPTY, position-3, position-1);
 	    } else {
-		movePiece(color, ROOK, EMPTY, position+3, position+1);
+		movePiece(color, ROOK, EMPTY, position+4, position+1);
 	    }
 	}
 	    
