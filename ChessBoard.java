@@ -222,10 +222,27 @@ public class ChessBoard {
 	return 0;
     }
 
+    public void promotePawn(int position, int type) {
+	if (typeAtPosition(position) != PAWN) return;
+	if (type < 0 || type > 4) return;
+	int color = colorAtPosition(position);
+	switch (color) {
+	case WHITE:
+	    bbWhite[type] |= (1L << position);
+	    bbWhite[PAWN] &= -1*((1L << position) + 1L);
+	    break;
+	case BLACK:
+	    bbBlack[type] |= (1L << position);
+	    bbBlack[PAWN] &= -1*((1L << position) + 1L);
+	}
+    }
+	    
+	
+    
     //makes given move
     public void makeMove(ChessMove move) {
 	int startType = typeAtPosition(move.start);
-	if (startType==0) return;
+	if (startType==-1) return;
 	int endType = typeAtPosition(move.end);
 	int color = colorAtPosition(move.start);
 	switch (color) { //could technically be a conditional, but this leaves room to change null move conditions
@@ -242,6 +259,9 @@ public class ChessBoard {
 	}
 
 	//all the following come after the actual move making in case of unchecked exceptions during bitboard manipulation
+
+	//pawn promotion!
+	if (startType==PAWN && (move.end/8)==(color==WHITE? 7: 0)) promotePawn(move.end, QUEEN);
 	
 	//if a capture, then add to the enemy's captured list this type of capture piece
 	if (move.capture) capturedPieces((color + 1)/2).add(endType);
@@ -410,8 +430,9 @@ public class ChessBoard {
 	
     public static void main(String[] a) {
 	ChessBoard b = new ChessBoard();
-	b.place(WHITE, QUEEN, "d6");
-	pr(b.toString(Chess.directionMask(b.getAll(), 1, ChessMove.toIndex("d6"))));
+	b.place(WHITE, PAWN, "d7");
+	b.makeMove("d7", "d8");
+	pr(b.toString());
     }
 
 
