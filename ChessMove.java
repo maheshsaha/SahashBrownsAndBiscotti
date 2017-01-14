@@ -1,24 +1,23 @@
 public class ChessMove {
     public final int start;
     public final int end;
-    public boolean capture;
+    public final boolean capture;
+    public static final ChessMove MATE = new ChessMove(-1, -1);
     
     public ChessMove(int start, int end) {
-	this.start = start;
-	this.end = end;
-	capture = false;
+	this(start, end, false);
     }
     public ChessMove(String start, String end) {
-	this.start = toIndex(start);
-	this.end = toIndex(end);
-	capture = false;
+	this(start, end, false);
     }
     public ChessMove(int start, int end, boolean capture) {
-	this(start, end);
+	this.start = start;
+	this.end = end;
 	this.capture = capture;
     }
     public ChessMove(String start, String end, boolean capture) {
-	this(start, end);
+	this.start = toIndex(start);
+	this.end = toIndex(end);
 	this.capture = capture;
     }
 
@@ -36,7 +35,6 @@ public class ChessMove {
 	if (start==otherMove.start & end==otherMove.end) return true;
 	return false;
     }
-  
     
     public static int toIndex(String s) {
 	try {

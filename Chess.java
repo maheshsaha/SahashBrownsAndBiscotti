@@ -1,8 +1,5 @@
 public class Chess {
     //never meant to be inititated, no instance methods.
-
-    
-    
     
     //diagonal masks
     public static long[] rowMasks = new long[64];
@@ -52,7 +49,6 @@ public class Chess {
 	for (int i=0; i<(8-Math.abs(backward-7)); i++) {
 	    backwardMask += 1L<<(7*i+start);
 	}
-	
 	forwardMasks[position] = forwardMask - (1L<<position);
 	backwardMasks[position] = backwardMask - (1L<<position);
     }
@@ -151,7 +147,25 @@ public class Chess {
 	if (Math.abs(passant-i)==1) return (1L<<(passant+8*color));
 	return 0L;
     }
-    
+
+    public static long castleMask(int color, ChessBoard b) {
+	if (color==ChessBoard.WHITE? b.whiteKingMoved: b.blackKingMoved) return 0L;
+	long mask = 0L;
+	int position = (color==ChessBoard.WHITE? 3: 59);
+	if (((b.getAll() & 0b110L) == 0L) &
+	    ((b.bbPieces(color, ChessBoard.ROOK) & (1L<<(position-3)))!=0L) &
+	    (b.attacking(position, -1*color) == 0L) &
+	    (b.attacking(position-1, -1*color) == 0L))
+	    mask += (1L << (position-2));
+	if (((b.getAll() & 0b1110000L) == 0L) &
+	    ((b.bbPieces(color, ChessBoard.ROOK) & (1L<<(position+4)))!=0L) &
+	    (b.attacking(position, -1*color) == 0L) &
+	    (b.attacking(position+1, -1*color) == 0L))
+	    mask += (1L << (position+2));
+	return mask;
+    }
+	    
+	
 
     //i don't know if there is a more effecient way to do this, lmk if you think of one
     public static long rayMask(int from, int to) {
@@ -176,7 +190,6 @@ public class Chess {
 	
     
     public static void main(String[] args) {
-	prll(rayMask(20, 21));
     }
 
     static void pr(Object o) {
