@@ -34,7 +34,8 @@ public class ChessGui extends JPanel {
     
     private static final int TILE_OFFSET_X = 50;
     private static final int TILE_OFFSET_Y = 50;
-    
+
+    private int[] pieceInt = {0,1,2,3,4,5,6};
     private Image imgBackground;
     
     // 0 = bottom, size-1 = top
@@ -44,7 +45,38 @@ public class ChessGui extends JPanel {
 	// load and set background image
 	URL urlBackgroundImg = getClass().getResource("/img/board.png");
 	this.imgBackground = new ImageIcon(urlBackgroundImg).getImage();
-
+	
+	// create and place pieces
+	//
+	// rook, knight, bishop, queen, king, bishop, knight, and rook
+	for (int i = 0; i < 3; i++)
+	    createAndAddPiece(WHITE, (pieceInt[i]+1), BOARD_START_X + TILE_OFFSET_X * i, BOARD_START_Y + TILE_OFFSET_Y * 7);
+	for (int i = 3; i < 4; i++)
+	    createAndAddPiece(WHITE, (pieceInt[i]+1), BOARD_START_X + TILE_OFFSET_X * (i+1), BOARD_START_Y + TILE_OFFSET_Y * 7);
+	for (int i = 4; i < 5; i++)
+     	    createAndAddPiece(WHITE, i+1, BOARD_START_X + TILE_OFFSET_X * (i-1),BOARD_START_Y + TILE_OFFSET_Y * 7);
+	for (int i = 2; i > -1; i--){
+	    createAndAddPiece(WHITE, (pieceInt[i]+1), BOARD_START_X + TILE_OFFSET_X * (5+(2-i)), BOARD_START_Y + TILE_OFFSET_Y * 7);
+	    createAndAddPiece(BLACK, (pieceInt[i]+1), BOARD_START_X + TILE_OFFSET_X * (5 + (2-i)), BOARD_START_Y + TILE_OFFSET_Y * 0);
+	}
+	
+	// pawns
+	for (int i = 0; i < 8; i++){
+	    createAndAddPiece(WHITE, PAWN, BOARD_START_X + TILE_OFFSET_X * i,BOARD_START_Y + TILE_OFFSET_Y * 6);
+	    createAndAddPiece(BLACK, PAWN, BOARD_START_X + TILE_OFFSET_X * i,BOARD_START_Y + TILE_OFFSET_Y * 1);
+	}
+	
+	//BLACK
+	for (int i = 0; i < 5; i++)
+	    createAndAddPiece(BLACK, (pieceInt[i]+1), BOARD_START_X + TILE_OFFSET_X * i, BOARD_START_Y + TILE_OFFSET_Y * 0);
+	
+	
+	// add mouse listeners to enable drag and drop
+	//
+	PiecesDragAndDropListener listener = new PiecesDragAndDropListener(this.pieces,this);
+	this.addMouseListener(listener);
+	this.addMouseMotionListener(listener);
+	
 	// create application frame and set visible
 	//
 	JFrame f = new JFrame();
@@ -54,6 +86,21 @@ public class ChessGui extends JPanel {
 	f.setResizable(false);
 	f.setSize(this.imgBackground.getWidth(null), this.imgBackground.getHeight(null));
     }
+    
+    /**
+     * create a game piece
+     * 
+     * @param color color constant
+     * @param type type constant
+     * @param x x position of upper left corner
+     * @param y y position of upper left corner
+     */
+    private void createAndAddPiece(int color, int type, int x, int y) {
+	Image img = this.getImageForPiece(color, type);
+	Piece piece = new Piece(img, x, y);
+	this.pieces.add(piece);
+    }
+   
     
     /**
      * load image for given color and type. This method translates the color
