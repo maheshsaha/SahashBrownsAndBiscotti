@@ -24,7 +24,7 @@ public class ChessHumanGame {
     void setMoves() {
 	moves.clear();
 	for (int i=0; i<64; i++) {
-	    if (((1L<<i) & b.getAll())!=0L) {
+	    if (((1L<<i) & b.getByColor(turn))!=0L) {
 		moves.add(b.pieceMoves(i));
 	    } else {
 		moves.add(new LinkedList<>());
