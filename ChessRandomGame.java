@@ -1,24 +1,24 @@
 import java.util.List;
 import java.util.LinkedList;
 import java.util.ArrayList;
+import java.util.Random;
 
-public class ChessHumanGame {
+
+public class ChessRandomGame {
     ChessBoard b;
     int turn;
-    //long checkMask;
     List<List<ChessMove>> moves;
     int start;
     int end;
 
 
-    ChessHumanGame() {
+    ChessRandomGame() {
 	b = new ChessBoard();
 	b.setup();
-	turn = ChessBoard.WHITE;
-	//checkMask = -1L;
 	moves = new ArrayList<List<ChessMove>>(64);
 	start = -1;
 	end = -1;
+	turn = 1;
     }
 
     void setMoves() {
@@ -32,6 +32,32 @@ public class ChessHumanGame {
 	}
     }
 
+    List<ChessMove> allMoves() {
+	List<ChessMove> out = new LinkedList<>();
+	for (int i=0; i<64; i++) {
+	    for (ChessMove move: moves.get(i)) {
+		out.add(move);
+	    }
+	}
+	return out;
+    }
+
+    ChessMove compMove() {
+	List<ChessMove> allMoves = allMoves();
+	List<ChessMove> captures = new LinkedList<>();
+	for (ChessMove move: allMoves) {
+	    if (move.capture) captures.add(move);
+	}
+	for (ChessMove move: captures) {
+	    allMoves.remove(move);
+	}
+	if (captures.size()>0) {
+	    return captures.get((new Random()).nextInt(captures.size()));
+	}
+	return allMoves.get((new Random()).nextInt(allMoves.size()));
+    }
+	
+    
     boolean movesAvailable() {
 	for (int i=0; i<64; i++) {
 	    if (moves.get(i).size()!=0)
@@ -40,9 +66,8 @@ public class ChessHumanGame {
 	}
 	return false;
     }
-	
     
-    void setStart() {
+    void setHumanStart() {
 	while (start==-1) {
 	    System.out.print("Enter starting square: ");
 	    String sStart = System.console().readLine().toLowerCase().trim();
@@ -64,7 +89,7 @@ public class ChessHumanGame {
 	}
     }
 
-    void setEnd() {
+    void setHumanEnd() {
 	while (end == -1) {
 	    System.out.print("Enter ending square (or c to cancel move): ");
 	    String sEnd = System.console().readLine().toLowerCase().trim();
@@ -84,13 +109,22 @@ public class ChessHumanGame {
 	}
     }
 
+    
+
     void makeTurn() {
 	System.out.println(b);
-	//checkMask = b.inCheckFilter(turn);
-	while (end == -1 || start == -1) {
-	    setStart();
-	    System.out.println(b.toString(ChessBoard.moveMask(moves.get(start))|ChessBoard.captureMask(moves.get(start))));
-	    setEnd();
+	if (turn==1) {
+	    while (end == -1 || start == -1) {
+		setHumanStart();
+		System.out.println(b.toString(ChessBoard.moveMask(moves.get(start))|ChessBoard.captureMask(moves.get(start))));
+		setHumanEnd();
+	    }
+	} else {
+	    System.out.println("Computer move: ");
+	    
+	    ChessMove move = compMove();
+	    start = move.start;
+	    end = move.end;
 	}
 	b.makeMove(new ChessMove(start, end));
     }
@@ -99,7 +133,7 @@ public class ChessHumanGame {
 	setMoves();
 	while (movesAvailable()) {
 	    makeTurn();
-	    turn = -1*turn;
+	    turn *= -1;
 	    end = start = -1;
 	    setMoves();
 	    // checkMask = -1L;
@@ -112,7 +146,7 @@ public class ChessHumanGame {
     }
     
     public static void main(String[] args) {
-	ChessHumanGame game = new ChessHumanGame();
+	ChessRandomGame game = new ChessRandomGame();
 	game.playGame();
     }
 
