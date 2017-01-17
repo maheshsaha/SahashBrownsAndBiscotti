@@ -22,10 +22,9 @@ Pd. 09 </h2>
 Highlights legal moves for a selected piece <br>
 Checkmate <br>
 Stalemate <br>
-
+Castling <br>
+Pawn Promotion <br>
  --------------------
 | To be Implemented: |
  --------------------
-Pawn Promotion <br>
-Castling <br>
-GUI Interaction (Maybe) <br>
+GUI Interaction (Interface added, but not incorporated with code //scratched) <br>
