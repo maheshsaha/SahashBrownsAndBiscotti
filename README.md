@@ -12,9 +12,13 @@ Pd. 09 </h2>
  ---------------
 | Instructions: |
  ---------------
+<b> For Human vs Human </b>
 1) Compile ChessHumanGame.java <br>
-2) Run ChessHumanGame 
-
+2) Run ChessHumanGame <br>
+<b> For AI vs Human </b>
+1) Compile ChessGame.java <br>
+2) If that doesn't work, compile ChessRandomGame.java <br>
+3) Run either java file! 
  -------------------
 | Working Features: |
  -------------------
